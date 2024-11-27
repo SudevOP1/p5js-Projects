@@ -1,0 +1,57 @@
+let width  = 700;
+let height = 700;
+
+let cellSize = 10;
+let cols = (width / cellSize);
+let rows = (height / cellSize);
+let antX = (cols/2);
+let antY = (rows/2);
+let dir  = "UP";
+let showGrid = true;
+let grid;
+
+function setup() {
+  createCanvas(width, height);
+  grid = createGrid();
+  grid[antX][antY] = 1;
+}
+
+function draw() {
+  background(0);
+  
+  for(let i=0; i<cols; i++) {
+    for(let j=0; j<rows; j++) {
+      
+      let gridX = i * cellSize;
+      let gridY = j * cellSize;
+      
+      if(showGrid) drawGrid(gridX, gridY);
+      
+      drawAnt();
+    }
+  }
+}
+
+function createGrid() {
+  let grid = [];
+  for(let i=0; i<cols; i++) {
+    grid[i] = new Array(rows).fill(0);
+  }
+  return grid;
+}
+
+function drawGrid(x, y) {
+  stroke(100);
+  strokeWeight(0.1);
+  noFill();
+  rect(x, y, cellSize);
+}
+
+function drawAnt() {
+  fill(200);
+  rect(antX * cellSize,
+    antY * cellSize,
+    cellSize,
+    cellSize
+  );
+}

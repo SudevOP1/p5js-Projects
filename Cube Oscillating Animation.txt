@@ -1,0 +1,52 @@
+let windowWidth  = 600;
+let windowHeight = 600;
+
+let designWidth  = 402;
+let designHeight = 402;
+let w = 25;
+let gap = 0;
+let sppedCount = 0;
+
+// constants
+let spped = 0.04;
+let minH = 100;
+let maxH = 400;
+let wavelength = 60;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight, WEBGL);
+  rectMode(CENTER);
+}
+
+function draw() {
+  background(30);
+  // setting the camera
+  ortho();
+  rotateX(-atan(1/sqrt(2)));
+  rotateY(PI/4);
+  translate(0, 60, 0);
+  
+  // coloring
+  directionalLight(255, 255, 255, 1, 1, -1);
+  stroke(1);
+  fill(200);
+  
+  
+  for(let z = 0; z < designHeight; z += w) {
+    for(let x = 0; x < designWidth; x += w) {
+
+      push();
+      
+      let d = (dist(x, z, designWidth / 2, designHeight / 2))/wavelength;
+      let h = map(sin(-sppedCount + d), -1, 1, minH, maxH);
+      
+      translate(x - designWidth/2, 0, z - designHeight / 2);
+      box(w - gap, h, w - gap);
+      
+      pop();
+
+    }
+  }
+  sppedCount += spped;
+  translate(0, -300, 0);
+}

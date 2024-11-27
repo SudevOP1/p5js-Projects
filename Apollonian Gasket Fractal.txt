@@ -1,0 +1,192 @@
+let windowWidth  = 700;
+let windowHeight = 700;
+
+let allCircles = [];
+let queue = [];
+let epsilon = 0.1
+let minRadius = 2;
+
+class Circle {
+  constructor(bend, x, y) {
+    this.bend = bend;
+    this.center = new ComplexNumber(x, y);
+    this.radius = abs(1 / this.bend);
+  }
+  show() {
+    stroke(200);
+    noFill();
+    circle(this.center.x, this.center.y, 2 * this.radius);
+  }
+  dist(other) {
+    return dist(
+      this.center.x,
+      this.center.y,
+      other.center.x,
+      other.center.y
+    );
+  }
+}
+
+class ComplexNumber {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+  add(other) {
+    return new ComplexNumber(this.x + other.x, this.y + other.y);
+  }
+  sub(other) {
+    return new ComplexNumber(this.x - other.x, this.y - other.y);
+  }
+  mul(other) {
+    return new ComplexNumber(
+      this.x * other.x - this.y * other.y,
+      this.x * other.y + this.y * other.x
+    );
+  }
+  div(other) {
+    let den = (other.x*other.x) + (other.y*other.y);
+    if(den === 0) {
+      throw new Error("Division by zero not allowed");
+    }
+    return new ComplexNumber(
+      ((this.x * other.x) + (this.y * other.y)) / den,
+      ((this.y * other.x) - (this.x * other.y)) / den
+    );
+  }
+  scale(num) {
+    return new ComplexNumber(this.x * num, this.y * num);
+  }
+  sqrt() {
+    let r = sqrt((this.x*this.x) + (this.y*this.y));
+    let theta = atan2(this.y, this.x);
+    let rNew = sqrt(r);
+    let thetaNew = theta / 2;
+    let xNew = rNew * cos(thetaNew);
+    let yNew = rNew * sin(thetaNew);
+    return new ComplexNumber(xNew, yNew);
+  }
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+
+  // first circle
+  let c1 = new Circle(-1 / (width / 2), width / 2, height / 2);
+  let r2 = random(100, c1.radius / 2);
+  let v = p5.Vector.fromAngle(random(TWO_PI));
+  v.setMag(c1.radius - r2);
+  
+  // second circle
+  let c2 = new Circle(1 / r2, width / 2 + v.x, height / 2 + v.y);
+  let r3 = v.mag();
+  v.rotate(PI);
+  v.setMag(c1.radius - r3);
+  
+  // third circle
+  let c3 = new Circle(1 / r3, width / 2 + v.x, height / 2 + v.y);
+  allCircles = [c1, c2, c3];
+  
+  // first triplet
+  queue = [[c1, c2, c3]];
+}
+
+function draw() {
+  background(50);
+  let len1 = allCircles.length; // current total circles
+  nextGeneration();
+  let len2 = allCircles.length; // new total circles
+  if (len1 == len2) noLoop();   // stop drawing if no new circles added
+  for (let c of allCircles) c.show(); // display all circles
+}
+
+function isTangent(c1, c2) {
+  let d = c1.dist(c2);
+  let r1 = c1.radius;
+  let r2 = c2.radius;
+  if(
+    abs(d - (r1 + r2)) < epsilon ||
+    abs(d - abs(r2 - r1)) < epsilon
+  ) return true;
+  return false;
+}
+
+function validate(c4, c1, c2, c3) {
+  // discard very small circles
+  if (c4.radius < minRadius) return false;
+
+  // check if circle already exists
+  for (let other of allCircles) {
+    let d = c4.dist(other);
+    let radiusDiff = abs(c4.radius - other.radius);
+    if (d < epsilon && radiusDiff < epsilon) {
+      return false;
+    }
+  }
+
+  // check if circles are mutually tangential
+  if (!isTangent(c4, c1)) return false;
+  if (!isTangent(c4, c2)) return false;
+  if (!isTangent(c4, c3)) return false;
+
+  return true;
+}
+
+function nextGeneration() {
+  let nextQueue = [];
+  for (let triplet of queue) {
+    
+    let [c1, c2, c3] = triplet;
+    let k4 = descartes(c1, c2, c3);
+    let newCircles = complexDescartes(c1, c2, c3, k4);
+
+    for (let newCircle of newCircles) {
+      if (validate(newCircle, c1, c2, c3)) {
+        allCircles.push(newCircle);
+        let t1 = [c1, c2, newCircle];
+        let t2 = [c1, c3, newCircle];
+        let t3 = [c2, c3, newCircle];
+        nextQueue = nextQueue.concat([t1, t2, t3]);
+      }
+    }
+  }
+  queue = nextQueue;
+}
+
+function descartes(c1, c2, c3) {
+  let k1 = c1.bend;
+  let k2 = c2.bend;
+  let k3 = c3.bend;
+  
+  let sum = k1 + k2 + k3;
+  let root = 2 * sqrt(k1*k2 + k2*k3 + k1*k3);
+  
+  return [sum + root, sum - root];
+}
+
+function complexDescartes(c1, c2, c3, k4) {
+  // curvature and center calculations for new circles
+  let k1 = c1.bend;
+  let k2 = c2.bend;
+  let k3 = c3.bend;
+  let z1 = c1.center;
+  let z2 = c2.center;
+  let z3 = c3.center;
+  let zk1 = z1.scale(k1);
+  let zk2 = z2.scale(k2);
+  let zk3 = z3.scale(k3);
+  
+  let sum = zk1.add(zk2).add(zk3);
+  let root = (zk1.mul(zk2).add(zk2.mul(zk3)).add(zk1.mul(zk3))).sqrt().scale(2);
+  let center1 = sum.add(root).scale(1 / k4[0]);
+  let center2 = sum.sub(root).scale(1 / k4[0]);
+  let center3 = sum.add(root).scale(1 / k4[1]);
+  let center4 = sum.sub(root).scale(1 / k4[1]);
+
+  return [
+    new Circle(k4[0], center1.x, center1.y),
+    new Circle(k4[0], center2.x, center2.y),
+    new Circle(k4[1], center3.x, center3.y),
+    new Circle(k4[1], center4.x, center4.y),
+  ];
+}
