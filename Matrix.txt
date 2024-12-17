@@ -1,0 +1,93 @@
+let width  = 700;
+let height = 500;
+
+let symbolSize   = 12;
+let symbolOffset = symbolSize + 5;
+let spawnChance  = 1;
+let spawnsPerFrame = 2;
+
+let minLength = 5;
+let maxLength = 15;
+let minVel    = 2;
+let maxVel    = 20;
+let paused = false;
+let lines = [];
+
+function setup() {
+  createCanvas(width, height);
+  textSize(symbolSize);
+}
+
+function draw() {
+  if(!paused) {
+    background(0);
+    spawnLines();
+    drawLines();
+  }
+}
+
+function mousePressed() {
+  if(mouseInCanvas() && mouseButton === LEFT) {
+    paused = !paused;
+  }
+}
+
+function mouseInCanvas() {
+  return (
+    0 <= mouseX &&
+    0 <= mouseY &&
+    mouseX <= width &&
+    mouseY <= height
+  );
+}
+
+function spawnLines() {
+  for(let i=0; i<spawnsPerFrame; i++) {
+    if(spawnChance > random(1)) {
+      lines.push(new Line(
+        floor(random(minLength, maxLength)),
+        random(-symbolSize, width),
+        -300,
+        random(minVel, maxVel)
+      ));
+    }
+  }
+}
+
+function drawSymbol(x, y, bright) {
+  let mySymbol = String.fromCharCode(
+    0x30A0 + round(random(96))
+  );
+  fill(0, 255, 70, bright);
+  text(mySymbol, x, y);
+}
+
+function drawLines() {
+  for(let i=lines.length-1; i>=0; i--) {
+    lines[i].move();
+    lines[i].show();
+    if(lines[i].y > height) {
+      lines.splice(i, 1);
+    }
+  }
+}
+
+class Line {
+  constructor(len, x, y, vel) {
+    this.len = len;
+    this.x = x;
+    this.y = y;
+    this.vel = vel;
+  }
+  
+  move() {
+    this.y += this.vel;
+  }
+  
+  show() {
+    for(let i=0; i<this.len; i++) {
+      let bright = map(i, 1, this.len, 50, 255);
+      drawSymbol(this.x, this.y + i*symbolOffset, bright);
+    }
+  }
+}

@@ -1,0 +1,112 @@
+let width  = 500;
+let height = 700;
+
+let G = 3;
+let dampingFactor = 0.99;
+
+let paused = false;
+let bob;
+
+function setup() {
+  createCanvas(width, height);
+  bob = new Bob(
+    pivX = width/2,
+    pivY = 0,
+    posX = random(-250, 250),
+    posY = random(0, 100),
+    velX = 0,
+    velY = 0,
+    m    = 10,
+    nLen = 350,
+    k    = 0.69,
+  );
+}
+
+function draw() {
+  if(!paused) {
+    background(0);
+    bob.update();
+    bob.show();
+    bob.showBobAtRestPos();
+  }
+}
+
+function mousePressed() {
+  if(mouseInCanvas() && mouseButton === LEFT) {
+    bob.vel = createVector();
+    bob.pos = createVector(mouseX, mouseY);
+  }
+}
+
+function mouseInCanvas() {
+  return (
+    0 <= mouseX &&
+    0 <= mouseY &&
+    mouseX <= width &&
+    mouseY <= height
+  );
+}
+
+class Bob {
+  
+  constructor(pivX, pivY, posX, posY, velX, velY, m, nLen, k=0.5) {
+    this.piv = createVector(pivX, pivY);
+    this.pos = createVector(posX, posY);
+    this.vel = createVector(velX, velY);
+    this.nLen  = nLen;
+    this.m = m;
+    this.k = k;
+    this.poss = [];
+  }
+  
+  update() {
+    // 1. Fg = m * G
+    // 2. Fs = -k * (x-x0)
+    // 3. Fnet = Fg + Fs
+    // 4. a = Fnet / m
+    // 5. v = v + a
+    // 6. x = x + v
+    
+    let gravityForce = createVector(0, this.m * G);
+    
+    let disp = p5.Vector.sub(this.pos, this.piv);
+    let dispMag = disp.mag();
+    let dispDir = disp.copy().normalize();
+    
+    let springForceMag = -this.k * (dispMag - this.nLen);
+    let springForce = dispDir.copy().mult(springForceMag);
+    
+    let netForce = p5.Vector.add(gravityForce, springForce);
+    let acc = netForce.div(this.m);
+    
+    this.vel.add(acc);
+    this.pos.add(this.vel);
+    
+    this.vel.mult(dampingFactor);
+    if(this.vel.mag() < 0.001) this.vel = createVector();
+    this.poss.push(this.pos);
+  }
+  
+  show() {
+    let disp = p5.Vector.sub(this.piv, this.pos).mag();
+    let r = map(disp, 0, 800, 0, 255);
+    let springColor = color(r, 255 - r, 0);
+    
+    stroke(springColor);
+    strokeWeight(1);
+    fill(springColor);
+    circle(this.pos.x, this.pos.y, 2 * this.m);
+    line(this.piv.x, this.piv.y, this.pos.x, this.pos.y);
+  }
+  
+  showBobAtRestPos() {
+    stroke(100, 100, 255)
+    strokeWeight(1);
+    noFill();
+    
+    let restDisp = this.m * G / this.k;
+    let restPosY = this.piv.y + this.nLen + restDisp;
+    
+    circle(this.piv.x, restPosY, 2 * this.m);
+  }
+}

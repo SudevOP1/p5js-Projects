@@ -1,0 +1,182 @@
+let width  = 700;
+let height = 700;
+
+let birdWidth  = 5;
+let birdLength = 10;
+let numOfBirds = 100;
+let maxDist    = 100;
+
+let minVel   = 1;
+let maxVel   = 4;
+let maxForce = 0.1;
+let birds    = [];
+let paused   = false;
+let alignmentSlider, cohesionSlider, separationSlider;
+
+function setup() {
+  createCanvas(width, height);
+  spawnBirds();
+  
+  alignmentSlider  = createSlider(maxForce, 5, 1, 0.01);
+  cohesionSlider   = createSlider(maxForce, 5, 1, 0.01);
+  separationSlider = createSlider(maxForce, 5, 1, 0.01);
+
+  stroke(255);
+  fill(255);
+  strokeWeight(1);
+}
+
+function draw() {
+  if (!paused) {
+    background(0);
+    
+    for(let bird of birds) {
+      bird.update();
+      bird.show();
+    }
+  }
+}
+
+class Bird {
+  
+  constructor(x=width/2, y=height/2, vx=0, vy=0) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(vx, vy);
+    this.acc = createVector();
+  }
+
+  show() {
+    let angle = atan2(this.vel.y, this.vel.x);
+    triangle(
+      this.pos.x + birdWidth / 2 * cos(angle + PI / 2),
+      this.pos.y + birdWidth / 2 * sin(angle + PI / 2),
+      this.pos.x + birdWidth / 2 * cos(angle - PI / 2),
+      this.pos.y + birdWidth / 2 * sin(angle - PI / 2),
+      this.pos.x + birdLength * cos(angle),
+      this.pos.y + birdLength * sin(angle)
+    );
+  }
+
+  update() {
+    
+    this.vel.add(this.acc).limit(maxVel);
+    this.pos.add(this.vel);
+
+    this.pos.x = (this.pos.x + width ) % width;
+    this.pos.y = (this.pos.y + height) % height;
+    
+    this.acc.mult(0);
+    this.flock();
+  }
+
+  alignment(birds) {
+    let steerAcc = createVector();
+    let count = 0;
+
+    for(let other of birds) {
+      let d = p5.Vector.sub(this.pos, other.pos).mag();
+      if (d < maxDist && other != this) {
+        steerAcc.add(other.vel);
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      steerAcc.div(count);
+      steerAcc.setMag(maxVel);
+      steerAcc.sub(this.vel);
+      steerAcc.limit(maxForce);
+    }
+    return steerAcc;
+  }
+  
+  cohesion(birds) {
+    let steerAcc = createVector();
+    let count = 0;
+
+    for(let other of birds) {
+      let d = p5.Vector.sub(this.pos, other.pos).mag();
+      if (d < maxDist && other != this) {
+        steerAcc.add(other.pos);
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      steerAcc.div(count);
+      steerAcc.sub(this.pos);
+      steerAcc.setMag(maxVel);
+      steerAcc.sub(this.vel);
+      steerAcc.limit(maxForce);
+    }
+    return steerAcc;
+  }
+  
+  separation(birds) {
+    let steerAcc = createVector();
+    let count = 0;
+
+    for(let other of birds) {
+      let d = p5.Vector.sub(this.pos, other.pos).mag();
+      if (d < maxDist && other != this) {
+        let diff = p5.Vector.sub(this.pos, other.pos);
+        diff.div(d);
+        steerAcc.add(diff);
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      steerAcc.div(count);
+      steerAcc.setMag(maxVel);
+      steerAcc.sub(this.vel);
+      steerAcc.limit(maxForce);
+    }
+    return steerAcc;
+  }
+  
+  flock() {
+    let alignment  = this.alignment(birds);
+    let cohesion   = this.cohesion(birds);
+    let separation = this.separation(birds);
+    
+    alignment .mult(alignmentSlider .value());
+    cohesion  .mult(cohesionSlider  .value());
+    separation.mult(separationSlider.value());
+    
+    this.acc.add(alignment);
+    this.acc.add(cohesion);
+    this.acc.add(separation);
+  }
+}
+
+function spawnBirds() {
+  for(let i=0; i<numOfBirds; i++) {
+    let dir1 = random([-1, 1]);
+    let dir2 = random([-1, 1]);
+
+    birds.push(
+      new Bird(
+        random(0, width),
+        random(0, height),
+        dir1 * random(minVel, maxVel),
+        dir2 * random(minVel, maxVel)
+      )
+    );
+  }
+}
+
+function mousePressed() {
+  if(mouseButton === LEFT && mouseInCanvas()) {
+    paused = !paused;
+  }
+}
+
+function mouseInCanvas() {
+  return (
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  );
+}

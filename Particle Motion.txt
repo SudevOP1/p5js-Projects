@@ -1,0 +1,161 @@
+let width  = 700;
+let height = 700;
+
+let numOfParticles = 100;
+
+let arrowPadding   = 50;
+let headLength     = 5;
+let headWidth      = 2;
+let minArrowLen    = 5;
+let maxArrowLen    = 50;
+let minParticleAcc = 0;
+let maxParticleAcc = 1;
+let maxParticleVel = 10;
+let particles = [];
+let arrows    = [];
+let paused = false;
+let particleColor, arrowBrightness, bgBrightness;
+
+function setup() {
+  createCanvas(width, height);
+  
+  particleColor = color(100, 100, 255);
+  arrowBrightness = 100;
+  bgBrightness    = 255;
+  
+  createArrows();
+  createParticles();
+}
+
+function draw() {
+  if(!paused) {
+    translate(width/2, height/2);
+
+    background(0, bgBrightness);
+    // draw arrows
+    for(let a of arrows) {
+      a.show();
+    }
+
+    // update particles
+    for(let p of particles) {
+      updateParticleVel(p);
+    }
+
+    // draw particles
+    for(let p of particles) {
+      p.update();
+      p.show();
+    }
+  }
+}
+
+function mousePressed() {
+  if(mouseButton === LEFT && mouseInCanvas()) {
+    paused = !paused;
+  }
+}
+
+function mouseInCanvas() {
+  return (
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  );
+}
+
+class Particle {
+  constructor(x, y, r, vx=0, vy=0) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(vx, vy);
+    this.r = r;
+  }
+  show() {
+    stroke(particleColor);
+    fill(particleColor);
+    strokeWeight(2);
+    circle(this.pos.x, this.pos.y, this.r);
+  }
+  update() {
+    this.pos.add(this.vel);
+  }
+}
+
+class Arrow {
+  constructor(x, y, angle, magnitude) {
+    this.pos = createVector(x, y);
+    this.angle = angle;
+    this.magnitude = magnitude;
+  }
+  
+  show() {
+    let r = map(this.magnitude, minArrowLen, maxArrowLen, 0, 255);
+    let arrowColor = color(r, 255-r, 0, arrowBrightness);
+    stroke(arrowColor);
+    fill(arrowColor);
+
+    let x = this.pos.x;
+    let y = this.pos.y;
+    let m = this.magnitude;
+    let a = this.angle;
+
+    let xEnd = x + m*cos(a);
+    let yEnd = y + m*sin(a);
+    strokeWeight(2);
+    line(x, y, xEnd, yEnd);
+
+    let arrowTipX    = xEnd + headLength * cos(a);
+    let arrowTipY    = yEnd + headLength * sin(a);
+    let leftCornerX  = xEnd - headWidth  * cos(a + PI/2);
+    let leftCornerY  = yEnd - headWidth  * sin(a + PI/2);
+    let rightCornerX = xEnd - headWidth  * cos(a - PI/2);
+    let rightCornerY = yEnd - headWidth  * sin(a - PI/2);
+
+    triangle(
+      arrowTipX, arrowTipY,
+      leftCornerX, leftCornerY,
+      rightCornerX, rightCornerY
+    );
+  }
+}
+
+function createArrows() {
+  for(let i=0; i<width/arrowPadding+1; i++) {
+    for(let j=0; j<height/arrowPadding+1; j++) {
+      let x = i*arrowPadding - width /2;
+      let y = j*arrowPadding - height/2;
+      let distFromCenter = dist(x, y, 0, 0);
+      let magnitude = map(
+        distFromCenter,
+        0, sqrt(sq(width/2) + sq(height/2)),
+        minArrowLen, maxArrowLen
+      );
+      let angle = atan2(y, x) + PI / 2;
+      arrows.push(new Arrow(x, y, angle, magnitude));
+    }
+  }
+}
+
+function createParticles() {
+  for(let i=0; i<numOfParticles; i++) {
+    let x = random(-width /2, width /2);
+    let y = random(-height/2, height/2);
+    let vx = random(-maxParticleVel, maxParticleVel);
+    let vy = random(-maxParticleVel, maxParticleVel);
+    particles.push(new Particle(x=x, y=y, r=5, vx=vx, vy=vy));
+  }
+}
+
+function updateParticleVel(p) {
+  let distFromCenter = dist(p.pos.x, p.pos.y, width/2, height/2);
+  let a = atan2(p.pos.y, p.pos.x) + PI;
+  let m = map(
+    distFromCenter,
+    0, sqrt(sq(width/2) + sq(height/2)),
+    minParticleAcc, maxParticleAcc
+  );
+  let ax = m * cos(a);
+  let ay = m * sin(a);
+  p.vel.add((createVector(ax, ay)));
+}

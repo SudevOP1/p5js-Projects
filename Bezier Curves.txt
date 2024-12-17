@@ -1,0 +1,123 @@
+let width  = 700;
+let height = 700;
+
+let x1A, y1A, x2A, y2A, x1C, y1C, x2C, y2C;
+let delta, epsilon;
+let lineStartColor;
+let lineEndColor;
+let tgtColor;
+let r, g, b;
+
+function setupVars() {
+  
+  delta = 0.01;
+  epsilon = 1e-9;
+  
+  // colors
+  lineStartColor    = [86, 67, 204];
+  lineEndColor      = [237, 21, 61];
+  tgtColor          = 200;
+  controlPointColor = color(200, 200, 0);
+  
+  // anchor points
+  [x1A, y1A] = [100, 200];
+  [x2A, y2A] = [600, 500];
+  
+  // control points
+  [x1C, y1C] = [300, 400];
+  [x2C, y2C] = [500, 300];
+}
+
+function setup() {
+  createCanvas(width, height);
+  setupVars();
+}
+
+function draw() {
+  background(0);
+  strokeWeight(15);
+  
+  // anchor points
+  stroke(200);
+  point(x1A, y1A);
+  point(x2A, y2A);
+  
+  // drawQuadraticBezier([x1A, y1A, x2A, y2A], [mouseX, mouseY])
+  drawCubicBezier([x1A, y1A, x2A, y2A], [x1C, y1C, x2C, y2C]);
+  // drawCubicBezier([x1A, y1A, x2A, y2A], [mouseX, mouseY, x2C, y2C]);
+}
+
+function drawQuadraticBezier(anchorPoints, controlPoint) {
+  
+  let [x1A, y1A, x2A, y2A] = anchorPoints;
+  let [xC, yC] = controlPoint;
+  
+  // drawing tangents
+  stroke(tgtColor);
+  strokeWeight(1);
+  line(x1A, y1A, xC, yC);
+  line(x2A, y2A, xC, yC);
+  
+  // drawing curve
+  let prevX = x1A;
+  let prevY = y1A;
+  strokeWeight(7);
+  for (let t=0; t<=1+epsilon; t+=delta) {
+    r = map(t, 0, 1, lineStartColor[0], lineEndColor[0]);
+    g = map(t, 0, 1, lineStartColor[1], lineEndColor[1]);
+    b = map(t, 0, 1, lineStartColor[2], lineEndColor[2]);
+    stroke(r, g, b);
+    let x = ((1-t)*(1-t)*x1A) + (2*(1-t)*t*xC) + (t*t*x2A);
+    let y = ((1-t)*(1-t)*y1A) + (2*(1-t)*t*yC) + (t*t*y2A);
+    line(prevX, prevY, x, y);
+    prevX = x;
+    prevY = y;
+  }
+  
+  // drawing control point
+  stroke(controlPointColor);
+  strokeWeight(15);
+  point(xC, yC);
+}
+
+function drawCubicBezier(anchorPoints, controlPoints) {
+  
+  let [x1A, y1A, x2A, y2A] = anchorPoints;
+  let [x1C, y1C, x2C, y2C] = controlPoints;
+  
+  // drawing tangents
+  stroke(tgtColor);
+  strokeWeight(1);
+  line(x1A, y1A, x1C, y1C);
+  line(x2A, y2A, x2C, y2C);
+  
+  // drawing curve
+  let prevX = x1A;
+  let prevY = y1A;
+  strokeWeight(7);
+  for (let t=0; t<=1+epsilon; t+=delta) {
+    r = map(t, 0, 1, lineStartColor[0], lineEndColor[0]);
+    g = map(t, 0, 1, lineStartColor[1], lineEndColor[1]);
+    b = map(t, 0, 1, lineStartColor[2], lineEndColor[2]);
+    stroke(r, g, b);
+    let x = 
+      (1-t) * (1-t) * (1-t) * x1A + 
+      3 * (1-t) * (1-t) * t * x1C + 
+      3 * (1-t) * t * t * x2C + 
+      t * t * t * x2A;
+    let y = 
+      (1-t) * (1-t) * (1-t) * y1A + 
+      3 * (1-t) * (1-t) * t * y1C + 
+      3 * (1-t) * t * t * y2C + 
+      t * t * t * y2A;
+    line(prevX, prevY, x, y);
+    prevX = x;
+    prevY = y;
+  }
+  
+  // drawing control points
+  stroke(controlPointColor);
+  strokeWeight(15);
+  point(x1C, y1C);
+  point(x2C, y2C);
+}

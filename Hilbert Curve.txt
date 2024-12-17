@@ -1,0 +1,101 @@
+let width  = 700;
+let height = 700;
+
+let order = 5;
+let N;
+let totalPoints;
+let path = [];
+let showNums;
+let r, g, b;
+let startColor, endColor;
+
+function setupVars() {
+  showNums = false;
+  N = pow(2, order);
+  totalPoints = N * N;
+  startColor = [86, 67, 204];
+  endColor   = [237, 21, 61];
+}
+
+function setup() {
+  createCanvas(width, height);
+  setupVars();
+  createHilbert();
+}
+
+function draw() {
+  background(0);
+  drawHilbert();
+  if(showNums) drawNums();
+}
+
+function hilbert(i) {
+  
+  let points = [
+    createVector(0, 0),
+    createVector(0, 1),
+    createVector(1, 1),
+    createVector(1, 0),
+  ];
+  
+  let index = i & 3;
+  let v = points[index];
+  
+  for(let j=1; j<order; j++) {
+    
+    i = i >>> 2;
+    index = i & 3;
+    let len = pow(2, j);
+
+    if(index == 0) {
+      let temp = v.x;
+      v.x = v.y;
+      v.y = temp;
+    } else if(index == 1) {
+      v.y += len;
+    } else if(index == 2) {
+      v.x += len;
+      v.y += len;
+    } else if(index == 3) {
+      let temp = len - 1 - v.x;
+      v.x = len - 1 - v.y;
+      v.y = temp;
+      v.x += len;
+    }
+  }
+  return v;
+}
+
+function createHilbert() {
+  for(let i=0; i<totalPoints; i++) {
+    path[i] = hilbert(i);
+    let len = width / N;
+    path[i].mult(len);
+    path[i].add(len/2, len/2);
+  }
+}
+
+function drawHilbert() {
+  noFill();
+  strokeWeight(2);
+  let prevX = path[0].x;
+  let prevY = path[0].y;
+  for(let i=0; i<path.length; i++) {
+    r = map(i, 0, path.length, startColor[0], endColor[0]);
+    g = map(i, 0, path.length, startColor[1], endColor[1]);
+    b = map(i, 0, path.length, startColor[2], endColor[2]);
+    stroke(r, g, b);
+    line(prevX, prevY, path[i].x, path[i].y);
+    prevX = path[i].x;
+    prevY = path[i].y;
+  }
+}
+
+function drawNums() {
+  for(let i=0; i<path.length; i++) {
+    fill(255, 0, 0);
+    noStroke();
+    textSize(12);
+    text(i, path[i].x + 5, path[i].y);
+  }
+}

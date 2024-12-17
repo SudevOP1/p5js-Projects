@@ -1,0 +1,58 @@
+let width  = 700;
+let height = 700;
+let showAxes = false;
+
+let x, y, k;
+let a = 300;
+let n = 5;
+let d = 29;
+let sliderN, sliderD;
+
+function setup() {
+  createCanvas(width, height);
+  angleMode(DEGREES);
+  sliderN = createSlider(1, 10, n, 0.1);
+  sliderD = createSlider(1, 180, d, 0.001);
+}
+
+function draw() {
+  background(0);
+  translate(width / 2, height / 2);
+  if(showAxes) drawAxes();
+  n = sliderN.value();
+  d = sliderD.value();
+  console.log("n:", n, "\td: ", d)
+  
+  beginShape();
+  stroke(200);
+  strokeWeight(1);
+  noFill();
+  for(let i = 0; i < 360; i++) {
+    k = i * d;
+    r = a * sin(n * k);
+    x = r * cos(k);
+    y = r * sin(k);
+    vertex(x, y);
+  }
+  endShape();
+  
+  beginShape();
+  stroke(255, 0, 0);
+  strokeWeight(4);
+  noFill();
+  for(let i = 0; i < 360; i++) {
+    k = i;
+    r = a * sin(n * k);
+    x = r * cos(k);
+    y = r * sin(k);
+    vertex(x, y);
+  }
+  endShape();
+}
+
+function drawAxes() {
+  stroke(75);
+  strokeWeight(2);
+  line(0, -height/2, 0, height/2);
+  line(-width/2, 0, width/2, 0);
+}

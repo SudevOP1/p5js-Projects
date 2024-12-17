@@ -1,0 +1,77 @@
+let width  = 800;
+let height = 700;
+
+let maxPoints = 100000;
+let maxTime   = 3; // seconds
+let bold      = 2;
+let bright    = 100;
+let plotNormalPoints = false;
+
+let n = 0;
+let paused  = false;
+let stopped = false;
+let pointsPerFrame, scalingFactor;
+
+function setup() {
+  createCanvas(width, height);
+  
+  let w = width; let h = height;
+  scalingFactor = sqrt((w*w/4) + (h*h/4))/(maxPoints);
+  pointsPerFrame = floor(maxPoints/60/maxTime);
+  
+  background(0);
+  strokeWeight(bold);
+}
+
+function draw() {
+  if(stopped) {
+    noLoop();
+    console.log("end");
+  }
+  if(!paused) {
+    for(let i=0; i<pointsPerFrame; i++) {
+      plotNext();
+    }
+  }
+}
+
+function mousePressed() {
+  if(mouseButton === LEFT && mouseInCanvas()) {
+    paused = !paused;
+  }
+}
+
+function mouseInCanvas() {
+  return (
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  );
+}
+
+function isPrime(n) {
+  if(n <= 1) return false; 
+  for(let i=2; i<sqrt(n); i++) {
+    if(n % i === 0) return false;
+  }
+  return true;
+}
+
+function plotNext() {
+  if(isPrime(n)) {
+    stroke(255, 255, 0, bright);
+  } else {
+    if(plotNormalPoints) stroke(70, bright);
+    else noStroke();
+  }
+
+  let x = width /2 + n*cos(n)*scalingFactor;
+  let y = height/2 - n*sin(n)*scalingFactor;
+  point(x, y);
+
+  n++;
+  if(n >= maxPoints) {
+    stopped = true;
+  }
+}

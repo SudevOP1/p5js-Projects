@@ -1,0 +1,65 @@
+let width  = 700;
+let height = 700;
+
+let radius = 300;
+let numOfPoints = 200;
+let multiplier = 2;
+
+let points = [];
+
+function setup() {
+  createCanvas(width, height);
+}
+
+function draw() {
+  background(10);
+  
+  if(0 <= mouseX && mouseX <= width && 0 <= mouseY && mouseY <= height) {
+    numOfPoints = int(map(mouseX, 0, width, 0, 500));
+    // multiplier = int(map(mouseY, 0, height, 1, 10));
+  }
+  
+  calculatePoints();
+  drawCircle();
+  drawLines();
+  drawPoints();
+}
+
+function calculatePoints() {
+  points = [];
+  let angle = PI;
+  let step = 2 * PI / numOfPoints;
+  for(let i=0; i<numOfPoints; i++) {
+    let x = width/2  + radius*cos(angle);
+    let y = height/2 + radius*sin(angle);
+    points.push([x, y]);
+    angle += step;
+  }
+}
+
+function drawCircle() {
+  stroke(200);
+  strokeWeight(2);
+  noFill();
+  circle(width/2, height/2, radius*2);
+}
+
+function drawLines() {
+  stroke(200);
+  strokeWeight(1);
+  for(let i=0; i<numOfPoints; i++) {
+    let x1 = points[i][0];
+    let y1 = points[i][1];
+    let x2 = points[(i*multiplier)%numOfPoints][0];
+    let y2 = points[(i*multiplier)%numOfPoints][1];
+    line(x1, y1, x2, y2);
+  }
+}
+
+function drawPoints() {
+  stroke(200, 200, 0);
+  strokeWeight(10);
+  for(let i=0; i<numOfPoints; i++) {
+    point(points[i][0], points[i][1]);
+  }
+}

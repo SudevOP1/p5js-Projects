@@ -1,0 +1,119 @@
+let width  = 700;
+let height = 500;
+
+let t = 50; // thickness of wooden slab
+let l = 50; // length of toothpick
+let toothpickSpawnsPerFrame = 10;
+let fps = 60;
+
+let toothpickColor, woodenSurfaceColor;
+let totalToothpicks = 0;
+let intersectingToothpicksCount = 0;
+let calculatedPi = 0;
+let paused = false;
+let toothpicks = [];
+let prevNum = 0;
+
+function setup() {
+  createCanvas(width, height);
+  frameRate(fps);
+  background(0);
+  
+  toothpickColor = color(255, 255, 255, 50);
+  woodenSurfaceColor = color(255, 0, 0);
+}
+
+function draw() {
+  if(!paused && totalToothpicks <= 100000) {
+    
+    spawnToothpicks();
+    updatePiValue();
+    
+    drawNewToothpicks();
+    drawWoodenSurface();
+  }
+}
+
+function mousePressed() {
+  if(mouseInCanvas() && mouseButton === LEFT) {
+    paused = !paused;
+  }
+}
+
+class Toothpick {
+  constructor() {
+    this.x = random(l/2, width  - l/2);
+    this.y = random(l/2, height - l/2);
+    this.angle = random(2*PI);
+  }
+  show() {
+    stroke(toothpickColor);
+    strokeWeight(1);
+    line(
+      this.x - (l * cos(this.angle) / 2),
+      this.y - (l * sin(this.angle) / 2),
+      this.x + (l * cos(this.angle) / 2),
+      this.y + (l * sin(this.angle) / 2)
+    );
+  }
+}
+
+function mouseInCanvas() {
+  return (
+    0 <= mouseX &&
+    0 <= mouseY &&
+    mouseX <= width &&
+    mouseY <= height
+  );
+}
+
+function spawnToothpicks() {
+  for(let i=0; i<toothpickSpawnsPerFrame; i++) {
+    toothpicks.push(new Toothpick());
+    totalToothpicks++;
+  }
+}
+
+function drawWoodenSurface() {
+  for(let i=1; i<width/t; i++) {
+    stroke(woodenSurfaceColor);
+    strokeWeight(2);
+    line(i*t, 0, i*t, height);
+  }
+}
+
+function drawNewToothpicks() {
+  for(let i=prevNum; i<toothpicks.length; i++) {
+    toothpicks[i].show();
+  }
+  prevNum = toothpicks.length;
+}
+
+function updatePiValue() {
+  for(let i = prevNum; i < toothpicks.length; i++) {
+    if(intersects(toothpicks[i])) {
+      intersectingToothpicksCount++;
+    }
+  }
+  
+  if(intersectingToothpicksCount > 0) {
+    calculatedPi
+      = (2 * l * totalToothpicks)
+      / (t * intersectingToothpicksCount);
+  }
+  
+  console.log(`${totalToothpicks}, ${intersectingToothpicksCount}, ${calculatedPi}`);
+}
+
+function intersects(tp) {
+  let x1 = tp.x - (l/2)*cos(tp.angle);
+  let x2 = tp.x + (l/2)*cos(tp.angle);
+
+  if(x1 > x2) [x1, x2] = [x2, x1];
+
+  for(let i=0; i<width/t+1; i++) {
+    let lineX = i * t;
+    if(x1<lineX && x2>lineX) return true;
+  }
+  return false;
+}

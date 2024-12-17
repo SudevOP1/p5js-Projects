@@ -1,0 +1,90 @@
+let width  = 700;
+let height = 700;
+let dampingFactor = 0.999;
+let particlesPerExplosion = 50;
+
+let minRad = 1;
+let maxRad = 3;
+let minVel = 2;
+let maxVel = 5;
+let particles = [];
+
+function setup() {
+  createCanvas(width, height);
+  strokeWeight(1);
+}
+
+function draw() {
+  background(0);
+  
+  particles = particles.filter(p => {
+    p.update();
+    p.show();
+    return !p.isOffscreen();
+  });
+  
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    createExplosion();
+  }
+}
+
+function createExplosion() {
+
+  for(let i=0; i<particlesPerExplosion; i++) {
+    
+    let v = random(minVel, maxVel);
+    let a = random(2 * PI);
+    let rr = random(100, 255);
+    let g = random(100, 255);
+    let b = random(100, 255);
+    
+    particles.push(new Particle(
+      x = width/2,
+      y = height/2,
+      vx = v * cos(a),
+      vy = v * sin(a),
+      r = random(minRad, maxRad),
+      col = color(rr, g, b, 255),
+    ));
+
+  }
+}
+
+class Particle {
+  
+  constructor(x, y, vx, vy, r, col) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(vx, vy);
+    this.rad = r;
+    this.col = col;
+  }
+  
+  show() {
+    stroke(this.col);
+    fill(this.col);
+    circle(this.pos.x, this.pos.y, 2*this.rad);
+  }
+  
+  update() {
+    this.vel.mult(dampingFactor);
+    this.pos.add(this.vel);
+  }
+  
+  isOffscreen() {
+    return (
+      this.pos.x + this.rad < 0 || 
+      this.pos.y + this.rad < 0 || 
+      this.pos.x - this.rad > width || 
+      this.pos.y - this.rad > height
+    );
+  }
+}

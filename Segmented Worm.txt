@@ -1,0 +1,70 @@
+let width  = 700;
+let height = 700;
+
+let numOfSegs = 100;
+let segs = [];
+
+function setup() {
+  createCanvas(width, height);
+  
+  let firstSeg = new Segment(350, 350, 10, 0);
+  segs.push(firstSeg);
+  
+  let prevSeg = firstSeg;
+  let current;
+  for(let i=1; i<numOfSegs; i++) {
+    let current = new Segment(prevSeg.b.x, prevSeg.b.y, 10, 0);
+    segs.push(current);
+    prevSeg = current;
+  }
+}
+
+function draw() {
+  background(0);
+  
+  let lastSeg = segs[numOfSegs - 1];
+  lastSeg.follow(mouseX, mouseY);
+  lastSeg.update();
+  lastSeg.show();
+  
+  for(let i=numOfSegs-2; i>=0; i--) {
+    segs[i].follow(segs[i+1].a.x, segs[i+1].a.y);
+    segs[i].update();
+    segs[i].show();
+  }
+}
+
+class Segment {
+  
+  constructor(x, y, len, ang) {
+    this.a = createVector(x, y);
+    this.b = createVector();
+    this.len = len;
+    this.ang = ang;
+  }
+  
+  show() {
+    stroke(200);
+    strokeWeight(2);
+    line(this.a.x, this.a.y, this.b.x, this.b.y);
+  }
+  
+  update() {
+    this.calcB();
+  }
+  
+  calcB() {
+    this.b.x = this.a.x + this.len*cos(this.ang);
+    this.b.y = this.a.y + this.len*sin(this.ang);
+  }
+  
+  follow(x, y) {
+    let target = createVector(x, y);
+    let dir = p5.Vector.sub(target, this.a);
+    this.ang = dir.heading();
+    
+    dir.setMag(this.len);
+    dir.mult(-1);
+    this.a = p5.Vector.add(target, dir)
+  }
+}
