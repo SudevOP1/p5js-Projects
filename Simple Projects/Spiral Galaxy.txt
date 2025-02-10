@@ -1,0 +1,112 @@
+let width  = 700;
+let height = 700;
+
+let numOfStars = 2000;
+let widthHeightRatio = 0.7;
+let sizeDiff = 0.4;
+let maxRotationGradient = 0.02;
+let minDistance = 0;
+
+let rotationGradientSlider;
+let stars = [];
+let showEllipses = false;
+
+function setup() {
+  createCanvas(width, height);
+  
+  setupStars();
+  setupRotationGradientSlider();
+}
+
+function draw() {
+  background(0);
+  
+  if(showEllipses) drawEllipses();
+  drawStars();
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    showEllipses = !showEllipses;
+  }
+}
+
+function setupRotationGradientSlider() {
+  rotationGradientSlider = createSlider(
+    0,
+    maxRotationGradient / 2,
+    maxRotationGradient / 4,
+    0.00001
+  );
+}
+
+function setupStars() {
+  for(let i=0; i<numOfStars; i++) {
+    let majorAxisLen = minDistance + i*sizeDiff;
+    let minorAxisLen = majorAxisLen * widthHeightRatio;
+    stars.push(new Star(
+      majorAxisLen, minorAxisLen,
+      random(2 * PI),
+      1,
+      color(255, 200),
+    ));
+  }
+}
+
+function drawEllipses() {
+  push();
+  noFill();
+  stroke(255, 100);
+  strokeWeight(0.1)
+  translate(width*0.5, height*0.5);
+  
+  for(let i=0; i<numOfStars; i++) {
+    rotate(rotationGradientSlider.value());
+    let majorAxisLen = minDistance + i*sizeDiff;
+    let minorAxisLen = majorAxisLen * widthHeightRatio;
+    ellipse(0, 0, majorAxisLen, minorAxisLen);
+  }
+  pop();
+}
+
+function drawStars() {
+  push();
+  translate(width/2, height/2);
+  
+  for(let i=0; i<stars.length; i++) {
+    rotate(rotationGradientSlider.value());
+    
+    stars[i].update();
+    stars[i].show();
+  }
+  pop();
+}
+
+class Star {
+  
+  constructor(majorAxisLen, minorAxisLen, theta=0, r=2, col=color(255)) {
+    this.majorAxisLen = majorAxisLen;
+    this.minorAxisLen = minorAxisLen;
+    this.theta = theta;
+    this.r = r;
+    this.col = col;
+  }
+  
+  update() {
+    this.theta += 0.01;
+  }
+  
+  show() {
+    let x = this.majorAxisLen * cos(this.theta) / 2;
+    let y = this.minorAxisLen * sin(this.theta) / 2;
+    noStroke();
+    fill(this.col);
+    circle(x, y, 2*this.r);
+  }
+}

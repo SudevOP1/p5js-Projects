@@ -1,0 +1,88 @@
+let width  = 700;
+let height = 700;
+
+let padding = 50;
+
+function setup() {
+  createCanvas(width, height);
+  background(255);
+  
+  drawNW();
+  drawNE();
+  drawSE();
+  drawSW();
+  drawLines();
+}
+
+function drawNE() {
+  stroke(128);
+  strokeWeight(5);
+  let step = (height/2 - padding) / 10;
+  for(let i=0; i<10; i++) {
+    line(padding + i*step, padding, padding + i*step, height/2);
+  }
+}
+
+function drawNW() {
+  noStroke();
+  fill(255, 213, 5);
+  let stepX = (width/2 - padding) / 10;
+  let stepY = (height/2 - padding) / 10;
+  for(let i=1; i<10; i++) {
+    for(let j=1; j<10; j++) {
+      circle(
+        width/2 + i*stepX,
+        padding + j*stepY + (i%2)*stepY/2 - stepY/4,
+        15
+      );
+    }
+  }
+}
+
+function drawSW() {
+  noStroke();
+  fill(255, 3, 3);
+  let step = (height/2 - padding) / 10;
+  for(let i=0; i<10; i++) {
+    for(let j=0; j<10; j++) {
+      if((i+j) % 2 === 0) {
+        rect(
+          padding + i*step,
+          height/2 + j*step,
+          step,
+          step
+        );
+      }
+    }
+  }
+}
+
+function drawSE() {
+  stroke(29, 0, 252);
+  strokeWeight(10);
+  let stepX = (width/2 - padding) / 10;
+  let stepY = (height/2 - padding) / 10;
+  for(let i=0; i<10; i++) {
+      line(
+        width/2 + i*stepX,
+        height/2,
+        width-padding,
+        height/2 + (10-i) * stepY
+      );
+      line(
+        width/2,
+        height/2 + i*stepY,
+        width/2 + (10-i)*stepX,
+        height - padding
+      );
+  }
+}
+
+function drawLines() {
+  stroke(0);
+  strokeWeight(5);
+  noFill();
+  rect(padding, padding, width-2*padding, height-2*padding);
+  line(width/2, padding, width/2, height-padding);
+  line(padding, height/2,  width-padding, height/2);
+}

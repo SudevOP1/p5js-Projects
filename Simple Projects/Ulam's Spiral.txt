@@ -1,0 +1,68 @@
+let windowWidth  = 700;
+let windowHeight = 700;
+let stepSize = 20;
+
+let lineWeight = 100;
+let pointWeight = 255;
+let num = 1;
+let x, y;
+let prevX, prevY;
+let numOfSteps = 1;
+let turnCounter = 0;
+let state = 1;
+let maxNums = ((windowWidth/stepSize)) * ((windowHeight/stepSize));
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  prevX = x = windowWidth / 2;
+  prevY = y = windowHeight / 2;
+  background(0);
+  // frameRate(2);
+  console.log(maxNums);
+}
+
+function draw() {
+  
+  if(num >= maxNums) {
+    noLoop();
+    console.log("end");
+  }
+  
+  // drawing
+  stroke(lineWeight);
+  line(x, y, prevX, prevY);
+  stroke(pointWeight);
+  if(isPrime(num)) circle(x, y, 5); // point
+  
+  prevX = x;
+  prevY = y;
+  [x, y] = incrementXY(state, [x, y])
+  num++;
+  if ((num - 1) % numOfSteps === 0) {
+    turnCounter++;
+    state = (state % 4) + 1;
+    if (turnCounter % 2 === 0) numOfSteps++;
+  }
+}
+
+function incrementXY(state, [x, y]) {
+  if(state == 1) {
+    x += stepSize;
+  } else if(state == 2) {
+    y -= stepSize;
+  } else if(state == 3) {
+    x -= stepSize;
+  } else {
+    y += stepSize;
+  }
+  return [x, y];
+}
+
+function isPrime(num) {
+  let numIsPrime = true;
+  if(num <= 1) return false;
+  for(let i=2; i<=sqrt(num); i++) {
+    if(num % i === 0) numIsPrime = false;
+  }
+  return numIsPrime;
+}

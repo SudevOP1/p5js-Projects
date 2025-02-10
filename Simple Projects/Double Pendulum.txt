@@ -1,0 +1,88 @@
+let PI = 3.14159265359;
+let g = 1;
+let speed_of_time = 1;
+let damping = 1;
+let line_color = (150);
+let rod_color  = (0);
+let bob_color  = (0);
+
+let r1 = 200;
+let r2 = 150;
+
+let m1 = 30;
+let m2 = 30;
+let theta1 = PI / 2;
+let theta2 = PI;
+let x1, y1, x2, y2;
+let prev_x2, prev_y2;
+let v1 = 0;
+let v2 = 0;
+let a1 = 0;
+let a2 = 0;
+
+let windowWidth  = 2 * (r1 + r1);
+let windowHeight = 2 * (r1 + r1);
+let canvas;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  
+  canvas = createGraphics(windowWidth, windowHeight);
+  canvas.background(255);
+  canvas.translate(windowWidth/2, windowHeight/2);
+}
+
+function draw() {
+  image(canvas, 0, 0);
+  translate(windowWidth/2, windowHeight/2);
+  
+  
+  // formula for angular acceleration a1
+  num1 = -g * ((2*m1) + m2) * sin(theta1);
+  num2 = -m2 * g * sin(theta1 - (2*theta2));
+  num3 = -2 * sin(theta1-theta2) * m2;
+  num4 = ((v2 * v2 * r2) + (v1 * v1 * r1 * cos(theta1-theta2)));
+  den = r1 * ((2*m1) + m2 - (m2 * cos(2 * (theta1 - theta2))));
+  a1 = (num1 + num2 + (num3 * num4)) / den;
+  a1 *= speed_of_time;
+  // formula for angular acceleration a2
+  num1 = 2 * sin(theta1-theta2);
+  num2 = v1 * v1 * r1 * (m1+m2);
+  num3 = g * (m1+m2) * cos(theta1);
+  num4 = v2 * v2 * r2 * m2 * cos(theta1-theta2);
+  den = r2 * ((2*m1) + m2 - (m2 * cos(2 * (theta1-theta2))));
+  a2 = (num1 * (num2 + num3 + num4)) / den;
+  a2 *= speed_of_time;
+  
+  
+  // calculations
+  v1 += a1;
+  v2 += a2;
+  v1 *= damping;
+  v2 *= damping;
+  theta1 += v1;
+  theta2 += v2;
+  x1 = r1*sin(theta1);
+  y1 = r1*cos(theta1);
+  x2 = x1 + r2*sin(theta2);
+  y2 = y1 + r2*cos(theta2);
+  
+  
+  // drawing pendulum rods
+  stroke(rod_color);
+  strokeWeight(3);
+  line(0, 0, x1, y1);
+  line(x1, y1, x2, y2);
+  // drawing pendulum bobs
+  stroke(bob_color);
+  fill(0);
+  ellipse(x1, y1, m1, m1);
+  ellipse(x2, y2, m2, m2);
+  
+  // drawing line
+  canvas.strokeWeight(1);
+  canvas.stroke(line_color);
+  canvas.line(prev_x2, prev_y2, x2, y2);
+  prev_x2 = x2;
+  prev_y2 = y2;
+}

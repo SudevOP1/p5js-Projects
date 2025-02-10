@@ -1,0 +1,123 @@
+let width  = 700;
+let height = 700;
+
+let numOfParticles = 300;
+let inc = 0.1;
+let scl = 10;
+let cols, rows;
+let zoff = 0;
+
+let fr;
+let particles = [];
+let paused = false;
+let flowfield;
+
+function setup() {
+  createCanvas(width, height);
+  cols = floor(width / scl);
+  rows = floor(height / scl);
+  fr = createP('');
+
+  flowfield = new Array(cols * rows);
+
+  for(let i=0; i<numOfParticles; i++) {
+    particles[i] = new Particle();
+  }
+  background(0);
+}
+
+function draw() {
+  if(!paused) {
+    let yoff = 0;
+    for(let y=0; y<rows; y++) {
+      let xoff = 0;
+      for(let x=0; x<cols; x++) {
+        let index = x + y*cols;
+        let angle = noise(xoff, yoff, zoff) * 8 * PI;
+        let v = p5.Vector.fromAngle(angle);
+        v.setMag(1);
+        flowfield[index] = v;
+        xoff += inc;
+        stroke(0, 50);
+      }
+      yoff += inc;
+      zoff += 0.0003;
+    }
+
+    for(let i=0; i<particles.length; i++) {
+      particles[i].follow(flowfield);
+      particles[i].update();
+      particles[i].checkEdges();
+      particles[i].show();
+    }
+  }
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    paused = !paused;
+  }
+}
+
+class Particle {
+  
+  constructor() {
+    this.pos = createVector(random(width), random(height));
+    this.vel = createVector(0, 0);
+    this.acc = createVector(0, 0);
+    this.maxspeed = 4;
+    this.prevPos = this.pos.copy();
+  }
+
+  update() {
+    this.vel.add(this.acc);
+    this.vel.limit(this.maxspeed);
+    this.pos.add(this.vel);
+    this.acc.mult(0);
+  }
+
+  follow(vectors) {
+    let x = floor(this.pos.x / scl);
+    let y = floor(this.pos.y / scl);
+    let index = x + y*cols;
+    let force = vectors[index];
+    this.acc.add(force);
+  }
+
+  show() {
+    stroke(255, 10);
+    strokeWeight(1);
+    line(this.pos.x, this.pos.y, this.prevPos.x, this.prevPos.y);
+    this.updatePrev();
+  }
+
+  updatePrev() {
+    this.prevPos.x = this.pos.x;
+    this.prevPos.y = this.pos.y;
+  }
+
+  checkEdges() {
+    if(this.pos.x > width) {
+      this.pos.x = 0;
+      this.updatePrev();
+    }
+    if(this.pos.x < 0) {
+      this.pos.x = width;
+      this.updatePrev();
+    }
+    if(this.pos.y > height) {
+      this.pos.y = 0;
+      this.updatePrev();
+    }
+    if(this.pos.y < 0) {
+      this.pos.y = height;
+      this.updatePrev();
+    }
+  }
+}

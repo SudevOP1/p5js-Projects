@@ -1,0 +1,152 @@
+let width  = 700;
+let height = 700;
+
+let wallCollision = true;
+let bodyCollision = true;
+
+let cellSize = 20;
+let snake;
+let gameOver = true;
+let apple;
+let score = -1;
+
+function setup() {
+  createCanvas(width, height);
+  textAlign(CENTER, CENTER);
+  textStyle(BOLD);
+  frameRate(10);
+  noStroke();
+  snake = new Snake();
+  apple = new Apple(20, 20);
+}
+
+function draw() {
+  background(0);
+  
+  if(gameOver) {
+    fill(255);
+    textSize(64);
+    text("SNAKE GAME", width/2, height/2-50);
+    textSize(24);
+    text("Press SPACE to Start", width/2, height/2+50);
+  }
+  
+  else {
+    checkGameOver();
+    
+    if(p5.Vector.equals(apple.pos, snake.pos)) {
+      snake.increaseLen();
+      apple = new Apple();
+    }
+    
+    apple.show();
+    snake.update();
+    snake.show();
+  }
+}
+
+function keyPressed() {
+  // start or restart game
+  if(gameOver && key === " ") {
+    gameOver = false;
+    snake = new Snake();
+    apple = new Apple();
+  }
+  // set direction
+  else {
+    if(keyCode === UP_ARROW    && snake.vel.y !=  1) snake.vel.set(0, -1);
+    if(keyCode === DOWN_ARROW  && snake.vel.y != -1) snake.vel.set(0, 1);
+    if(keyCode === LEFT_ARROW  && snake.vel.x !=  1) snake.vel.set(-1, 0);
+    if(keyCode === RIGHT_ARROW && snake.vel.x != -1) snake.vel.set(1, 0);
+  }
+}
+
+function checkGameOver() {
+  if(
+    (wallCollision && snake.checkWallCollision()) ||
+    (bodyCollision && snake.checkBodyCollision())
+  ) {
+    gameOver = true;
+  }
+}
+
+class Snake {
+  
+  constructor(x=0, y=0, xVel=1, yVel=0) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(xVel, yVel);
+    this.body = [this.pos.copy()];
+    this.growNext = false;
+  }
+
+  update() {
+    // move the head
+    this.pos.add(p5.Vector.mult(this.vel, cellSize));
+    
+    // wrap around if wallCollision is off
+    if(!wallCollision) {
+      this.pos.x = (this.pos.x + width) % width;
+      this.pos.y = (this.pos.y + height) % height;
+    }
+    
+    // add a new segment at the end if growing
+    if(this.growNext) {
+      this.body.push(this.body[this.body.length-1].copy());
+      this.growNext = false;
+    }
+
+    // update body positions
+    for(let i=this.body.length-1; i>0; i--) {
+      this.body[i].set(this.body[i-1]);
+    }
+    
+    // update head position in the body
+    this.body[0] = this.pos.copy();
+  }
+
+  show() {
+    let gStart = 222, gEnd = 59;
+    for(let i=this.body.length-1; i>=0; i--) {
+      let gVal = map(i, 0, this.body.length, gStart, gEnd);
+      fill(0, gVal, 0);
+      rect(this.body[i].x, this.body[i].y, cellSize, cellSize);
+    }
+  }
+
+  increaseLen() {
+    this.growNext = true;
+  }
+  
+  checkBodyCollision() {
+    for(let i=1; i<this.body.length; i++) {
+      if(this.pos.x === this.body[i].x && this.pos.y === this.body[i].y) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  checkWallCollision() {
+    return (
+      this.pos.x < 0 ||
+      this.pos.y < 0 ||
+      this.pos.x >= width ||
+      this.pos.y >= height
+    );
+  }
+}
+
+class Apple {
+  
+  constructor(
+    x=cellSize*floor(random(width/cellSize)),
+    y=cellSize*floor(random(height/cellSize))
+  ) {
+    this.pos = createVector(x, y);
+  }
+  
+  show() {
+    fill(255, 0, 0);
+    circle(this.pos.x+cellSize/2, this.pos.y+cellSize/2, cellSize);
+  }
+}

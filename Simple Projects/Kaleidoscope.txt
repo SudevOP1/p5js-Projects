@@ -1,0 +1,40 @@
+let width  = 700;
+let height = 700;
+
+let swSlider;
+let symmetry = 6;
+
+function setup() {
+  createCanvas(width, height);
+  background(0);
+  colorMode(HSB);
+  
+  swSlider = createSlider(1, 5, 2, 0.1);
+  strokeWeight(1);
+}
+
+function draw() {
+  if(mouseIsPressed) {
+    translate(width/2, height/2);
+    
+    let hueValue = frameCount % 360;
+    stroke(hueValue, 100, 100);
+    
+    let mx = mouseX - width/2;
+    let my = mouseY - height/2;
+    let pmx = pmouseX - width/2;
+    let pmy = pmouseY - height/2;
+    
+    let angle = 2 * PI / symmetry;
+    for(let i=0; i<symmetry; i++) {
+      
+      strokeWeight(swSlider.value());
+      rotate(angle);
+      push();
+      line(mx, my, pmx, pmy);
+      scale(1, -1);
+      line(mx, my, pmx, pmy);
+      pop();
+    }
+  }
+}

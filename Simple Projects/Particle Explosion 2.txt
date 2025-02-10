@@ -1,0 +1,99 @@
+let width  = 700;
+let height = 700;
+
+let particlesPerExplosion = 10;
+let vel = 5;
+let rad = 2;
+
+let particles = [];
+let paused = false;
+
+function setup() {
+  createCanvas(width, height);
+  strokeWeight(1);
+}
+
+function draw() {
+  if(!paused) {
+    background(0);
+
+    particles = particles.filter(p => {
+      p.update();
+      p.show();
+      return !p.isOffscreen();
+    });
+
+    createExplosion(mouseX, mouseY);
+  }
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    paused = !paused;
+  }
+}
+
+function createExplosion(x, y) {
+  for(let i=0; i<particlesPerExplosion; i++) {
+
+    let a = random(2 * PI);
+    let rr = random(100, 255);
+    let g = random(100, 255);
+    let b = random(100, 255);
+
+    particles.push(new Particle(
+      x = x,
+      y = y,
+      vx = vel * cos(a),
+      vy = vel * sin(a),
+      r = rad,
+      col = color(rr, g, b, 255),
+    ));
+  }
+}
+
+class Particle {
+  
+  constructor(x, y, vx, vy, r, col) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(vx, vy);
+    this.rad = r;
+    this.col = col;
+    this.alp = 255;
+  }
+  
+  show() {
+    let c = color(
+     red(this.col),
+     green(this.col),
+     blue(this.col),
+      this.alp
+    );
+    stroke(c);
+    fill(c);
+    circle(this.pos.x, this.pos.y, 2 * this.rad);
+  }
+  
+  update() {
+    this.pos.add(this.vel);
+    //decrease brightness
+    this.alp -= 10;
+    this.alp = max(this.alp, 0);
+  }
+  
+  isOffscreen() {
+    return (
+      this.pos.x + this.rad < 0 || 
+      this.pos.y + this.rad < 0 || 
+      this.pos.x - this.rad > width || 
+      this.pos.y - this.rad > height ||
+      this.alp === 0
+    );
+  }
+}

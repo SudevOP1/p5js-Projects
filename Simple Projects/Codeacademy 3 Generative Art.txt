@@ -1,0 +1,160 @@
+let width  = 700;
+let height = 700;
+
+let x, y;
+let xSpeed, ySpeed;
+let rVal, gVal, bVal;
+let aVal = 70;
+let angle = 0;
+
+function setup() {
+  createCanvas(width, height);
+  randomizeVars()
+  background(50);
+}
+
+function draw() {
+  if(keyIsPressed && key !== " ") {
+    let n = keyCode % 5
+    if(n === 0) parametricLines();
+    if(n === 1) bouncingCircle();
+    if(n === 2) flower();
+  }
+}
+
+function keyReleased() {
+  randomizeVars()
+}
+
+function keyPressed() {
+  if(key !== " ") {
+    let n = keyCode % 5;
+    if(n === 3) roundedRect();
+    if(n === 4) star();
+  }
+}
+
+function randomizeVars() {
+  x = random(width);
+  y = random(height);
+  xSpeed = random(-3, 3);
+  ySpeed = random(-3, 3);
+}
+
+function parametricLines() {
+  push();
+  
+  rVal = map(y, 0, height, 0, 255);
+  gVal = map(x, 0, width, 0, 255);
+  bVal = 200;
+  
+  translate(x, y);
+  let rotation = map(x, 0, height, 0, 2*PI);
+  rotate(rotation);
+  
+  stroke(rVal, gVal, bVal, aVal);
+  line(-200, 0, 200, x);
+  
+  x += xSpeed;
+  y += ySpeed;
+  if(x >= width  || x <= 0) xSpeed *= -1;
+  if(y >= height || y <= 0) ySpeed *= -1;
+  pop();
+}
+
+function bouncingCircle() {
+  let size = random(-100, 50);
+  
+  if(y > 0) {
+    size = map(y, 0, height, 0, 100);
+  } else {
+    size = map(xSpeed, 0, height, 0, 100);
+  }
+
+  rVal = map(y, 0, height, 0, 255);
+  gVal = map(x, 0, width, 0, 255);
+  bVal = map(x+y, 0, width+height, 0, 255);
+  
+  stroke(rVal, gVal, bVal, aVal);
+  fill(gVal, 255, bVal, aVal);
+  x += xSpeed;
+  y += ySpeed;
+
+  if(x >= width  || x <= 0) xSpeed *= -1;
+  if(y >= height || y <= 0) ySpeed *= -1;
+  
+  circle(x, y, size);
+}
+
+function flower() {
+  push();
+  translate(x, y);
+  rotate(radians(angle));
+  
+  let centerX = random(25, 50);
+  let centerY = random(25, 50);
+  
+  rVal = noise(frameCount * 0.01) * 50 + 150;
+  gVal = map(x + y, 0, width + height, 0, 255);
+  
+  noStroke();
+  fill(rVal, gVal, 100, aVal);
+  circle(centerX, centerY, 20);
+  
+  stroke(rVal, gVal, 100, aVal * 1.5);
+  line(0, 0, centerX, centerY);
+
+  angle += 12;
+  pop();
+}
+
+function roundedRect() {
+  push();
+  rectMode(CENTER);
+  
+  let shapeX = random(width);
+  let shapeY = random(height);
+  
+  let size = random(100, 300);
+  
+  rVal = map(size, 100, 300, 0, 255);
+  noStroke();
+  fill(120, rVal, 160, aVal * 0.5);
+  rect(
+    shapeX, shapeY,
+    size*0.1, size,
+    size*0.03, size*0.03, size*0.03, size*0.03
+  );
+  pop();
+}
+
+function star() {
+  let radius1 = random(30, 50);
+  let radius2 = random(30, 50);
+  let npoints = random(4, 7);
+  push();
+  let posX = random(width);
+  let posY = random(height);
+  
+  translate(posX, posY);
+  rotate(frameCount / 200);
+  
+  noStroke();
+  bVal = map(posY, 0, height, 0, 255);
+  fill(0, 0, bVal, aVal/2);
+  
+  let angle = 2 * PI / int(npoints);
+  let halfAngle = angle / 2.0;
+  
+  beginShape();
+  for (let a = 0; a < 2*PI; a += angle) {
+    let sx = cos(a) * radius2;
+    let sy = sin(a) * radius2;
+    vertex(sx, sy);
+    sx = cos(a + halfAngle) * radius1;
+    sy = sin(a + halfAngle) * radius1;
+    vertex(sx, sy);
+  }
+  endShape(CLOSE);
+  pop();
+}

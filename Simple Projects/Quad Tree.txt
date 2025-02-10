@@ -1,0 +1,188 @@
+let width  = 700;
+let height = 700;
+
+let qt;
+let numOfPoints = 100;
+
+function setup() {
+  createCanvas(width, height);
+  let bd = new Rectangle(width/2, height/2, width/2, height/2);
+  qt = new QuadTree(bd, 4);
+  insertPoints();
+  noFill();
+}
+
+function draw() {
+  background(0);
+  qt.show();
+  
+  queryPoints(mouseX, mouseY, 200, 200);
+}
+
+function insertPoints() {
+  for(let i=0; i<numOfPoints; i++) {
+    qt.insert(new Point(
+      x = random(width),
+      y = random(height)
+    ));
+  }
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    qt.insert(new Point(mouseX, mouseY));
+  }
+}
+
+function queryPoints(x, y, w, h) {
+  let range = new Rectangle(x, y, w/2, h/2);
+  
+  // draw range
+  stroke(50, 255, 50);
+  strokeWeight(1);
+  rect(x-w/2, y-h/2, w, h);
+  
+  // get & draw points
+  let points = qt.query(range);
+  for(let pt of points) {
+    circle(pt.x, pt.y, 7);
+  }
+}
+
+class Point {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+}
+
+class Rectangle {
+  
+  constructor(x, y, w, h) {
+    // x, y are coords of center
+    // w, h are half width and height
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
+  
+  contains(pt) {
+    return (
+      pt.x >= this.x - this.w &&
+      pt.y >= this.y - this.h &&
+      pt.x <= this.x + this.w &&
+      pt.y <= this.y + this.h
+    );
+  }
+  
+  intersects(other) {
+    return (
+      this.x - this.w < other.x + other.w ||
+      this.y - this.h < other.y + other.h ||
+      this.x + this.w > other.x - other.w ||
+      this.y + this.h > other.y - other.h
+    );
+  }
+}
+
+class QuadTree {
+  
+  constructor(bd, cp) {
+    this.bd = bd;
+    this.cp = cp;
+    this.points  = [];
+    this.divided = false;
+  }
+  
+  insert(pt) {
+    if(!this.bd.contains(pt)) {
+      return false;
+    }
+    if(this.points.length < this.cp) {
+      this.points.push(pt);
+      return true;
+    } else {
+      if(!this.divided) {
+        this.subdivide();
+      }
+      return (
+        this.ne.insert(pt) ||
+        this.nw.insert(pt) ||
+        this.sw.insert(pt) ||
+        this.se.insert(pt)
+      );
+    }
+  }
+  
+  subdivide() {
+    let x = this.bd.x;
+    let y = this.bd.y;
+    let w = this.bd.w / 2;
+    let h = this.bd.h / 2;
+    
+    let ne = new Rectangle(x + w, y - h, w, h);
+    let nw = new Rectangle(x - w, y - h, w, h);
+    let sw = new Rectangle(x - w, y + h, w, h);
+    let se = new Rectangle(x + w, y + h, w, h);
+    
+    this.ne = new QuadTree(ne, this.cp);
+    this.nw = new QuadTree(nw, this.cp);
+    this.sw = new QuadTree(sw, this.cp);
+    this.se = new QuadTree(se, this.cp);
+    
+    this.divided = true;
+  }
+  
+  show() {
+    stroke(255);
+    
+    // draw rects
+    strokeWeight(1);
+    rect(
+      this.bd.x - this.bd.w,
+      this.bd.y - this.bd.h,
+      2 * this.bd.w,
+      2 * this.bd.h
+    );
+    
+    // draw children rects
+    if(this.divided) {
+      this.ne.show();
+      this.nw.show();
+      this.sw.show();
+      this.se.show();
+    }
+    
+    // draw points
+    strokeWeight(3);
+    for(let pt of this.points) {
+      point(pt.x, pt.y)
+    }
+  }
+  
+  query(range) {
+    if(!this.bd.intersects(range)) {
+      return [];
+    }
+    let found = [];
+    for(let pt of this.points) {
+      if(range.contains(pt)) {
+        found.push(pt);
+      }
+    }
+    if(this.divided) {
+      found = found.concat(this.ne.query(range));
+      found = found.concat(this.nw.query(range));
+      found = found.concat(this.sw.query(range));
+      found = found.concat(this.se.query(range));
+    }
+    return found;
+  }
+}

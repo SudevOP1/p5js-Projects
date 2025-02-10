@@ -1,0 +1,97 @@
+let width    = 700;
+let height   = 700;
+let iterationsPerFrame = 50;
+let cellSize = 2;
+let updateCellUsingMouse = true;
+let dir = 0; // start up
+
+let grid;
+let directions = [
+  [ 0,  1], // up
+  [ 1,  0], // right
+  [ 0, -1], // down
+  [-1,  0]  // left
+];
+let cols = Math.floor(width / cellSize);
+let rows = Math.floor(height / cellSize);
+let antX = Math.floor(cols/2);
+let antY = Math.floor(rows/2);
+
+function setup() {
+  createCanvas(width, height);
+  grid = createGrid();
+}
+
+function draw() {
+  background(0);
+      
+  for(let k=0; k<iterationsPerFrame; k++){
+    updateAnt();
+  }
+  
+  for(let i=0; i<cols; i++) {
+    for(let j=0; j<rows; j++) {
+      drawCells(i, j);
+    }
+  }
+  drawAnt();
+}
+
+function createGrid() {
+  let grid = [];
+  for(let i=0; i<cols; i++) {
+    grid[i] = new Array(rows).fill(false);
+  }
+  return grid;
+}
+
+function mouseDragged() {
+  let i = Math.floor(mouseX / cellSize);
+  let j = Math.floor(mouseY / cellSize);
+  if (updateCellUsingMouse && i >= 0 && i < cols && j >= 0 && j < rows) {
+    if(mouseButton == LEFT) grid[i][j] = true;
+    else grid[i][j] = false;
+  }
+}
+
+function mousePressed() {
+  let i = Math.floor(mouseX / cellSize);
+  let j = Math.floor(mouseY / cellSize);
+  if (updateCellUsingMouse && i >= 0 && i < cols && j >= 0 && j < rows) {
+    if(mouseButton == LEFT) grid[i][j] = true;
+    else grid[i][j] = false;
+  }
+}
+
+function drawCells(i, j) {
+  
+  // for cells
+  if(grid[i][j]) fill(200);
+  else noFill();
+  
+  // drawing
+  noStroke();
+  rect(i*cellSize, j*cellSize, cellSize, cellSize);
+}
+
+function updateAnt() {
+  
+  let state = grid[antX][antY];
+  
+  // white cell
+  if(state) dir = (dir + 1) % 4;
+  // black cell
+  else dir = (dir + 3) % 4;
+  
+  grid[antX][antY] = !grid[antX][antY];
+  
+  antX = (antX + cols + directions[dir][0]) % cols;
+  antY = (antY + rows + directions[dir][1]) % rows;
+  
+}
+
+function drawAnt() {
+  noStroke();
+  fill(50, 50, 200);
+  rect(antX * cellSize, antY * cellSize, cellSize, cellSize);
+}

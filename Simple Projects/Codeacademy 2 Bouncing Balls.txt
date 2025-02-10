@@ -1,0 +1,80 @@
+let width  = 700;
+let height = 700;
+
+let particles = [];
+let numOfParticles = 100;
+
+let maxV = 5;
+let minR = 10;
+let maxR = 20;
+
+function setup() {
+  createCanvas(width, height);
+  colorMode(HSB);
+  createParticles();
+  colorMode(RGB);
+}
+
+function draw() {
+  background(0, 50);
+  noStroke();
+  
+  for(let p of particles) {
+    p.update();
+    p.show();
+  }
+}
+
+function createParticles() {
+  for(let i=0; i<numOfParticles; i++) {
+    
+    let v = random(-maxV, maxV);
+    let a = random(2 * PI);
+    
+    particles.push(new Particle(
+      x = width/2, y = height/2,
+      vx = v*cos(a), vy = v*sin(a),
+      r = random(minR, maxR),
+      col = color(random(360), 100, 100)
+    ));
+  }
+}
+
+class Particle {
+  
+  constructor(x, y, vx, vy, r, col) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(vx, vy);
+    this.rad = r;
+    this.col = col;
+  }
+  
+  update() {
+    this.pos.add(this.vel);
+    this.checkEdges();
+  }
+  
+  checkEdges() {
+    if(this.pos.x <= this.rad) {
+      this.pos.x = this.rad;
+      this.vel.x *= -1
+    }
+    if(this.pos.y <= this.rad) {
+      this.pos.y = this.rad;
+      this.vel.y *= -1
+    }
+    if(this.pos.x >= width - this.rad) {
+      this.pos.x = width - this.rad;
+      this.vel.x *= -1
+    }
+    if(this.pos.y >= height - this.rad) {
+      this.pos.y = height - this.rad;
+      this.vel.y *= -1
+    }
+  }
+  
+  show() {
+    fill(this.col);
+    circle(this.pos.x, this.pos.y, 2 * this.rad);
+  }
+}

@@ -1,0 +1,54 @@
+let width  = 700;
+let height = 700;
+
+let gap  = 10;
+let amp  = 15;
+let step = 0.05;
+let padding = 50;
+
+let theta = 0;
+let points = [];
+let paused = false;
+let origin;
+
+function setup() {
+  createCanvas(width, height);
+  stroke(255, 100);
+  strokeWeight(5);
+  origin = createVector(width/2, height/2);
+  
+  for(let i=padding/gap; i<(width-padding)/gap+1; i++) {
+    for(let j=padding/gap; j<(height-padding)/gap+1; j++) {
+      points.push(createVector(i*gap, j*gap));
+    }
+  }
+}
+
+function draw() {
+  if(!paused) {
+    background(0);
+    
+    for(let p of points) {
+      
+      let dis = dist(origin.x, origin.y, p.x, p.y)
+      let dir = createVector(origin.x - p.x, origin.y - p.y).normalize();
+      let offset = amp * sin(dis / 50 + theta);
+      let pos = createVector(p.x + dir.x*offset, p.y + dir.y*offset);
+      
+      point(pos.x, pos.y);
+    }
+    theta += step;
+  }
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    paused = !paused;
+  }
+}

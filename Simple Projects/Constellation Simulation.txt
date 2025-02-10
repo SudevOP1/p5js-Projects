@@ -1,0 +1,109 @@
+let width  = 700;
+let height = 700;
+
+let minV = 1;
+let maxV = 2;
+let minR = 2;
+let maxR = 5;
+let maxDistToConnect = 200;
+
+let paused = false;
+let numOfParticles = 30;
+let particles = [];
+
+function setup() {
+  createCanvas(width, height);
+  strokeWeight(1);
+  for(let i=0; i<numOfParticles; i++) createParticle();
+}
+
+function draw() {
+  if(!paused) {
+    background(0);
+    for(let p of particles) {
+      p.update();
+      for(let q of particles) p.connect(q);
+      p.show();
+      if(!p.isVisible()) {
+        killParticle(p);
+        createParticle();
+      }
+    }
+  }
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    paused = !paused;
+  }
+}
+
+function createParticle() {
+  let v = random(minV, maxV);
+  let a = random(2 * PI);
+  particles.push(new Particle(
+    x  = random(width), y = random(height),
+    vx = v*cos(a), vy = v*sin(a),
+    r  = random(minR, maxR)
+  ));
+}
+
+function killParticle(p) {
+  let index = particles.indexOf(p);
+  if(index !== -1) {
+    particles.splice(index, 1);
+  }
+}
+
+class Particle {
+  
+  constructor(x, y, vx, vy, r) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(vx, vy);
+    this.acc = createVector();
+    this.rad = r;
+    this.col = 0;
+  }
+  
+  update() {
+    let n = 0.2;
+    this.acc.set(random(-n, n), random(-n, n));
+    
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+    
+    this.vel.limit(2);
+    if(this.col < 255) this.col += 5;
+  }
+  
+  show() {
+    fill(this.col);
+    circle(this.pos.x, this.pos.y, 2 * this.rad);
+  }
+  
+  connect(other) {
+    if(this !== other) {
+      let d = dist(this.pos.x, this.pos.y, other.pos.x, other.pos.y);
+      if(d < maxDistToConnect) {
+        d = map(d, 0, maxDistToConnect, 100, 0);
+        stroke(this.col, d);
+        line(this.pos.x, this.pos.y, other.pos.x, other.pos.y);
+      }
+    }
+  }
+  
+  isVisible() {
+    return (
+      this.pos.x - this.rad >= 0 &&
+      this.pos.y - this.rad >= 0 &&
+      this.pos.x + this.rad <= width  &&
+      this.pos.y + this.rad <= height
+    );
+  }
+}

@@ -1,0 +1,142 @@
+// note: add this script to the html file 👇
+// <script src="https://d3js.org/d3-delaunay.v6.min.js"></script>
+
+let width  = 700;
+let height = 700;
+
+let points = [];
+let stationaryPoints = [];
+let paused = false;
+
+let col1     = "#07c8f9";
+let col2     = "#0d41e1";
+let pointCol = "#ffff00"
+let numOfPoints = 20;
+let padding = 100;
+let minVel  = 0.5;
+let maxVel  = 1;
+
+function setup() {
+  createCanvas(width, height);
+  noStroke();
+  fill(255);
+  
+  col1 = color(col1);
+  col2 = color(col2);
+  
+  createPoints();
+}
+
+function draw() {
+  if(!paused) {
+    
+    background(255);
+    drawTriangles();
+    
+    // update and draw points
+    for(let p of points) {
+      p.show(col=pointCol, size=5);
+      p.update();
+    }
+  }
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    paused = !paused;
+  }
+}
+
+function drawTriangles() {
+  let coords = [];
+  for(let p of points) {
+    coords.push([p.x, p.y]);
+  }
+  for(let p of stationaryPoints) {
+    coords.push([p.x, p.y]);
+  }
+  let allPoints = points.concat(stationaryPoints);
+
+  // generate Delaunay triangulation
+  let delaunay = d3.Delaunay.from(coords);
+  let triangles = delaunay.triangles;
+
+  for(let i=0; i<triangles.length; i+=3) {
+    let p1 = allPoints[triangles[i]];
+    let p2 = allPoints[triangles[i+1]];
+    let p3 = allPoints[triangles[i+2]];
+    
+    // let x1 = map(p1.x, 0, width, -padding, width+padding);
+    // let x2 = map(p2.x, 0, width, -padding, width+padding);
+    // let x3 = map(p3.x, 0, width, -padding, width+padding);
+    // let y1 = map(p1.y, 0, height, -padding, height+padding);
+    // let y2 = map(p2.y, 0, height, -padding, height+padding);
+    // let y3 = map(p3.y, 0, height, -padding, height+padding);
+    
+    let x1 = p1.x, y1 = p1.y;
+    let x2 = p2.x, y2 = p2.y;
+    let x3 = p3.x, y3 = p3.y;
+    
+    let x = (x1 + x2 + x3) / 3;
+    let y = (y1 + y2 + y3) / 3;
+    r = map(y, 0, height, red  (col1), red  (col2));
+    g = map(y, 0, height, green(col1), green(col2));
+    b = map(y, 0, height, blue (col1), blue (col2));
+
+    fill(r, g, b);
+    triangle(x1, y1, x2, y2, x3, y3);
+  }
+}
+
+function createPoints() {
+  
+  // add moving points
+  for(let i=0; i<numOfPoints; i++) {
+    let v = random(minVel, maxVel);
+    let a = random(0, 2*PI);
+    points.push(new Point(random(0, width), random(0, height), v, a));
+  }
+  
+  // add stationary points on boundaries
+  let margin = 10;
+  let gap = 50;
+  for(let x=-gap; x<width+gap; x+=gap) {
+    stationaryPoints.push(new Point(x, -margin, 0, 0));         // Top border
+    stationaryPoints.push(new Point(x, height + margin, 0, 0)); // Bottom border
+  }
+  for(let y=-gap; y<height+gap; y+=gap) {
+    stationaryPoints.push(new Point(-margin, y, 0, 0));        // Left border
+    stationaryPoints.push(new Point(width + margin, y, 0, 0)); // Right border
+  }
+}
+
+class Point {
+  constructor(x, y, v, a) {
+    this.x = x;
+    this.y = y;
+    this.v = v;
+    this.a = a;
+  }
+  update() {
+    this.x += this.v * cos(this.a);
+    this.y += this.v * sin(this.a);
+    
+    let angleDeviation = 0.1;
+    this.a += random(-angleDeviation, angleDeviation);
+    
+    this.x = (this.x + width) % width;
+    this.y = (this.y + height) % height;
+  }
+  show(col, size) {
+    fill(col);
+    // let x = map(this.x, 0, width, -padding, width+padding);
+    // let y = map(this.y, 0, height, -padding, height+padding);
+    circle(this.x, this.y, size);
+  }
+}

@@ -1,0 +1,52 @@
+let width  = 700;
+let height = 700;
+
+let secondAngle;
+let minuteAngle;
+let hourAngle;
+let secondLength = 6;
+let minuteLength = 5;
+let hourLength   = 3;
+let secondColor;
+let minuteColor;
+let hourColor;
+let step;
+
+function setup() {
+  createCanvas(width, height);
+  
+  secondColor = color(255, 50, 50);
+  minuteColor = color(255);
+  hourColor   = color(255);
+  textSize(24);
+  
+  step = 300 / max(secondLength, minuteLength, hourLength);
+}
+
+function draw() {
+  background(0);
+  translate(width/2, height/2);
+  
+  calculateAngles();
+  drawHand(secondLength, secondAngle, secondColor, second());
+  drawHand(minuteLength, minuteAngle, minuteColor, minute());
+  drawHand(hourLength,   hourAngle,   hourColor,  hour()%12);
+}
+
+function drawHand(len, ang, col, time) {
+  stroke(col);
+  fill(col);
+  for(let i=1; i<=len; i++) {
+    text(
+      time,
+      step*i*cos(ang),
+      step*i*sin(ang)
+    )
+  }
+}
+
+function calculateAngles() {
+  secondAngle = map(second(), 0, 60, 0, 2*PI) - PI/2;
+  minuteAngle = map(minute(), 0, 60, 0, 2*PI) - PI/2;
+  hourAngle   = map(hour()%12,   0, 12, 0, 2*PI) - PI/2;
+}

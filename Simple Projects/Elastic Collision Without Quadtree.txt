@@ -1,0 +1,153 @@
+let width  = 700;
+let height = 700;
+
+let applyGravity = false;
+let numOfParticles = 100;
+let G    = 0.2;
+let maxV = 2;
+let minM = 0.1;
+let maxM = 0.2;
+
+let particles = [];
+let paused = false;
+
+function setup() {
+  createCanvas(width, height);
+  strokeWeight(1);
+  colorMode(HSB);
+  createParticles();
+}
+
+function draw() {
+  if(!paused) {
+    background(0);
+
+    checkCollisions();
+    for(let p of particles) {
+      p.update();
+      p.checkEdges();
+      p.show();
+    }
+    
+    // let ke = getKE();
+    // let p  = getMomentum();
+    // console.log("KE: " + ke + "\tMomentum: " + p);
+  }
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    paused = !paused;
+  }
+}
+
+function createParticles() {
+  for(let i=0; i<numOfParticles; i++) {
+    particles.push(new Particle(
+      x  = random(width),
+      y  = random(height),
+      vx = random(-maxV, maxV),
+      vy = random(-maxV, maxV),
+      m  = random(minM, maxM)
+    ));
+  }
+}
+
+function checkCollisions() {
+  for(let i=0; i<particles.length; i++) {
+    for(let j=i+1; j<particles.length; j++) {
+      particles[i].checkCollision(particles[j]);
+    }
+  }
+}
+
+function getKE() {
+  let ke = 0;
+  for(let p of particles) {
+    ke += 0.5 * p.m * p.vel.mag() * p.vel.mag();
+  }
+  return ke;
+}
+
+function getMomentum() {
+  let momentum = 0;
+  for(let p of particles) {
+    momentum += p.m * p.vel.mag();
+  }
+  return momentum;
+}
+
+class Particle {
+  
+  constructor(x, y, vx, vy, m) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(vx, vy);
+    this.acc = createVector();
+    this.m = m;
+    this.r = 20 * sqrt(this.m);
+    this.col = color(random(0, 255), 100, 80);
+  }
+  
+  update() {
+    if(applyGravity) this.acc.y += G;
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+    this.acc.mult(0);
+  }
+  
+  show() {
+    stroke(this.col);
+    fill(this.col);
+    circle(this.pos.x, this.pos.y, 2 * this.r);
+  }
+  
+  checkEdges() {
+    if(this.pos.x > width - this.r) {
+      this.pos.x = width - this.r;
+      this.vel.x *= -1;
+    } else if(this.pos.x < this.r) {
+      this.pos.x = this.r;
+      this.vel.x *= -1;
+    }
+    
+    if(this.pos.y > height - this.r) {
+      this.pos.y = height - this.r;
+      this.vel.y *= -1;
+    } else if(this.pos.y < this.r) {
+      this.pos.y = this.r;
+      this.vel.y *= -1;
+    }
+  }
+  
+  applyForce(force) {
+    force.div(this.m);
+    this.acc.add(force);
+  }
+  
+  checkCollision(other) {
+    let d = this.pos.dist(other.pos);
+    if (d === 0 || d > this.r + other.r) return;
+
+    let mSum = this.m + other.m;
+    let posDiff = p5.Vector.sub(other.pos, this.pos);
+    let vDiff   = p5.Vector.sub(other.vel, this.vel);
+    let dotProduct = vDiff.dot(posDiff);
+
+    if (dotProduct > 0) return;
+
+    let scale1 = (2 * other.m * dotProduct) / (mSum * d * d);
+    let scale2 = (2 * this.m  * dotProduct) / (mSum * d * d);
+
+    let deltaV1 = posDiff.copy().mult(scale1);
+    let deltaV2 = posDiff.copy().mult(-scale2);
+
+    this.vel.add(deltaV1);
+    other.vel.add(deltaV2);
+  }
+}

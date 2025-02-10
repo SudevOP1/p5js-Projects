@@ -1,0 +1,135 @@
+let windowWidth  = 800;
+let windowHeight = 800;
+let aspectRatio;
+let maxDistance;
+
+let numOfRays = 200;
+let randomLines = [];
+let rayColor;
+let error = 1e-9;
+let paused = false;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  aspectRatio = windowHeight / windowWidth;
+  maxDistance = sqrt(windowWidth * windowWidth + windowHeight * windowHeight);
+  rayColor = color(130, 130, 0);
+  randomLines = createRandomLines(6);
+}
+
+function draw() {
+  if(!paused) {
+    background(0);
+    drawRays(numOfRays);
+    drawLines(randomLines);
+  }
+}
+
+function createRandomLines(num) {
+  let arr = new Array(num);
+  for(let i=0; i<num; i++) {
+    arr[i] = new Array(
+      random(windowWidth),
+      random(windowWidth),
+      random(windowHeight),
+      random(windowHeight)
+    )
+  }
+  return arr;
+}
+
+function drawLines(randomLines) {
+  stroke(255);
+  for(let i=0; i<randomLines.length; i++) {
+    line(
+      randomLines[i][0],
+      randomLines[i][1],
+      randomLines[i][2],
+      randomLines[i][3]
+    );
+  }
+}
+
+function drawRays(numOfRays) {
+  stroke(rayColor);
+  let angle = 0;
+  let step = TWO_PI / numOfRays;
+
+  for (let i = 0; i < numOfRays; i++) {
+    
+    // calculating vertices of ray
+    let x1 = mouseX;
+    let y1 = mouseY;
+    let x2 = mouseX + 2 * (maxDistance * cos(angle));
+    let y2 = mouseY + 2 * (maxDistance * sin(angle));
+    
+    let poi = checkIntersection(x1, y1, x2, y2);
+    
+    // drawing rays
+    if(poi === false) {
+      line(x1, y1, x2, y2);
+    } else {
+      line(x1, y1, poi[0], poi[1]);
+    }
+    
+    angle += step;
+  }
+}
+
+function checkIntersection(rayX1, rayY1, rayX2, rayY2) {
+  let x3, y3, x4, y4;
+  let px_num, py_num, den;
+  let px, py;
+  let poiFound = false;
+  let poi;
+  
+  for (let i = 0; i < randomLines.length; i++) {
+    x3 = randomLines[i][0];
+    y3 = randomLines[i][1];
+    x4 = randomLines[i][2];
+    y4 = randomLines[i][3];
+
+    den = (rayX1-rayX2)*(y3-y4) - (rayY1-rayY2)*(x3-x4);
+    if (abs(den) < error) continue; // skipping nearly parallel lines
+
+    px_num = (((rayX1*rayY2 - rayY1*rayX2) * (x3-x4)) - ((rayX1-rayX2) * (x3*y4 - y3*x4)));
+    py_num = (((rayX1*rayY2 - rayY1*rayX2) * (y3-y4)) - ((rayY1-rayY2) * (x3*y4 - y3*x4)));
+    px = px_num / den;
+    py = py_num / den;
+
+    // check if POI lies on the line segment
+    if (
+      px >= min(rayX1, rayX2) - error && px <= max(rayX1, rayX2) + error &&
+      py >= min(rayY1, rayY2) - error && py <= max(rayY1, rayY2) + error &&
+      px >= min(x3, x4) - error && px <= max(x3, x4) + error &&
+      py >= min(y3, y4) - error && py <= max(y3, y4) + error
+    ) {
+      if(poiFound) {
+        // compare dist
+        let currentDist = sqrt((rayX1-px)*(rayX1-px) + (rayY1-py)*(rayY1-py));
+        let previousDist = sqrt((rayX1-poi[0])*(rayX1-poi[0]) + (rayY1-poi[1])*(rayY1-poi[1]));
+        if(currentDist <= previousDist) {
+          poi = [px,py];
+        }
+      } else {
+        poi = [px, py];
+        poiFound = true;
+      }
+    }
+  }
+
+  if(poiFound) return poi;
+  else return false;
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    paused = !paused;
+  }
+}

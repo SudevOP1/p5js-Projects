@@ -1,0 +1,65 @@
+let width  = 700;
+let height = 700;
+
+let raindrops = [];
+let spawnsPerFrame = 2;
+
+let minR = 5;
+let maxR = 25;
+let minV = 5;
+let maxV = 15;
+
+function setup() {
+  createCanvas(width, height);
+  noStroke();
+}
+
+function draw() {
+  colorMode(RGB);
+  background(0, 70);
+  colorMode(HSB);
+  
+  for(let i=0; i<spawnsPerFrame; i++) {
+    let r  = random(minR, maxR);
+    let x  = random(width);
+    let y  = -r;
+    let vx = 0;
+    let vy = map(r, minR, maxR, minV, maxV);
+    let c  = color(random(360), 100, 100);
+    raindrops.push(new Raindrop(x, y, vx, vy, r, c));
+  }
+  
+  for(let i=raindrops.length - 1; i>=0; i--) {
+    
+    let raindrop = raindrops[i];
+    raindrop.fall();
+    raindrop.show();
+    
+    if(!raindrop.isVisible()) {
+      raindrops.splice(i, 1);
+    }
+  }
+}
+
+class Raindrop {
+  
+  constructor(x, y, vx, vy, r, c) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(vx, vy);
+    this.rad = r;
+    this.col = c;
+  }
+  
+  fall() {
+    this.pos.add(this.vel);
+  }
+  
+  show() {
+    fill(this.col);
+    circle(this.pos.x, this.pos.y, 2 * this.rad);
+  }
+  
+  isVisible() {
+    return this.pos.y - this.rad <= height;
+  }
+}

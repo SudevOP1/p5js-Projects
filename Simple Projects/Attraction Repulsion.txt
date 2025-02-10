@@ -1,0 +1,130 @@
+let width  = 700;
+let height = 700;
+
+let moverSpawnProbab = 0.02;
+let G = 1000;
+let minDist = 30;
+let radius = 100;
+let showMovers = true;
+
+let attractors = [];
+let movers = [];
+let canvas;
+
+function setup() {
+  createCanvas(width, height);
+  attractors.push(new Attractor(width/2, height/2));
+  
+  // for drawing paths
+  canvas = createGraphics(width, height);
+  canvas.background(10);
+}
+
+function mousePressed() {
+  if(mouseX>=0 && mouseX<=width && mouseY>=0 && mouseY<=height) {
+    if(mouseButton == LEFT) {
+      attractors.push(new Attractor(mouseX, mouseY));
+    } else {
+      showMovers = !showMovers;
+    }
+  }
+}
+
+function draw() {
+  image(canvas, 0, 0);
+  background(10, 50);
+  
+  // draw attractors
+  for(let attractor of attractors) {
+    attractor.show();
+  }
+  
+  // create new mover
+  if(moverSpawnProbab > random(1)) {
+    newMover();
+  }
+  
+  // draw movers
+  for(let mover of movers) {
+    mover.update();
+    if(showMovers) mover.show();
+    mover.tracePath();
+  }
+}
+
+function newMover() {
+  let state = int(random(1, 5));
+  let x, y;
+  if(state === 1) {
+    x = random(width);
+    y = -10;
+  } else if(state === 2) {
+    x = width+10;
+    y = random(height);
+  } else if(state === 3) {
+    x = random(width);
+    y = height+10;
+  } else {
+    x = -10;
+    y = random(height);
+  }
+  let mover = new Mover(
+    x,
+    y,
+    (width/2-x)/abs(width/2-x),
+    (height/2-y)/abs(height/2-y)
+    // 0, 0
+  );
+  movers.push(mover);
+}
+
+class Attractor {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+  }
+  
+  show() {
+    stroke(200, 200, 0);
+    strokeWeight(10);
+    point(this.pos.x, this.pos.y);
+  }
+}
+
+class Mover {
+  constructor(x, y, velX=0, velY=0) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(velX, velY);
+    this.acc = createVector();
+    this.prevPos = this.pos.copy();
+  }
+  
+  update() {
+    this.acc.set(0, 0);
+    
+    for(let attractor of attractors) {
+      let r = p5.Vector.sub(attractor.pos, this.pos)
+      let aMag = G / (r.mag() * r.mag());
+      let a = p5.Vector.sub(r).setMag(aMag);
+      
+      if(r.mag() > minDist) this.acc.add(a);
+      if(r.mag() <= radius) this.acc.mult(-1);
+    }
+    
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+  }
+  
+  show() {
+    stroke(200);
+    strokeWeight(10);
+    point(this.pos.x, this.pos.y);
+  }
+  
+  tracePath() {
+    canvas.stroke(255, 100);
+    canvas.strokeWeight(1);
+    canvas.line(this.prevPos.x, this.prevPos.y, this.pos.x, this.pos.y);
+    
+    this.prevPos = this.pos;
+  }
+}

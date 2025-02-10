@@ -1,0 +1,80 @@
+let windowWidth  = 700;
+let windowHeight = 700;
+let numOfParticles = 50;
+let g = 10;
+let almostZero = 1;
+
+let mainParticleM = 30;
+let mainParticleX = windowWidth / 2;
+let mainParticleY = windowHeight / 2;
+let mainParticleColor;
+let particles = [];
+let normalParticleColor;
+let maxVel  = 4;
+let minMass = 10;
+let maxMass = 40;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  mainParticleColor = color(38, 143, 255);
+  normalParticleColor = color(255, 255, 255, 50)
+  createRandomParticles(numOfParticles);
+}
+
+function draw() {
+  background(0, 0, 0, 30);
+  drawMainParticle();
+  for(let particle of particles) particle.show();
+}
+
+class Particle {
+  constructor(m, x, y, xVCel, yVel) {
+    this.m    = m;
+    this.x    = x;
+    this.y    = y;
+    this.xVel = xVCel;
+    this.yVel = yVel;
+  }
+  show() {
+    this.updatePos();
+    stroke(200);
+    fill(normalParticleColor);
+    circle(this.x, this.y, this.m);
+  }
+  updatePos() {
+    let dx = mainParticleX - this.x;
+    let dy = mainParticleY - this.y;
+    let r = sqrt((dx*dx) + (dy*dy));
+    let a = (g * mainParticleM) / constrain(r * r, 4000, 8000);
+    
+    // dont apply force if object is very close to the mainParticle
+    if(r <= almostZero) return;
+    
+    let xA = a * dx / r;
+    let yA = a * dy / r;
+    
+    this.xVel += xA;
+    this.yVel += yA;
+    this.x += this.xVel;
+    this.y += this.yVel;
+  }
+}
+
+function createRandomParticles(n) {
+  for(let i=0; i<n; i++) {
+    let m    = random(minMass, maxMass);
+    let x    = random(windowWidth/4  + m, 3*windowWidth/4  - m);
+    let y    = random(windowHeight/4 + m, 3*windowHeight/4 - m);
+    let xVel = 0;
+    let yVel = 0;
+    while(xVel === 0) xVel = random(-maxVel, maxVel);
+    while(yVel === 0) yVel = random(-maxVel, maxVel);
+    particles.push(new Particle(m, x, y, xVel, yVel));
+  }
+}
+
+function drawMainParticle() {
+  stroke(mainParticleColor);
+  fill(mainParticleColor);
+  circle(mainParticleX, mainParticleY, 2 * mainParticleM);
+}

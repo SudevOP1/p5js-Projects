@@ -1,0 +1,98 @@
+let windowWidth  = 700;
+let windowHeight = 700;
+let G = 2;
+let numOfBodys = 70;
+let showSun  = false;
+let applySun = true;
+let showTrails = false;
+
+let sunM = 100;
+let r    = 200;
+let minV = 10;
+let maxV = 15;
+let minM = 10;
+let maxM = 15;
+let bodies = [];
+let sun;
+
+class Body {
+  
+  constructor(x, y, vx, vy, m) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(vx, vy);
+    this.acc = createVector(0, 0);
+    this.mass = m;
+    this.r = sqrt(this.mass) * 2;
+  }
+  
+  attract(other) {
+    let force = p5.Vector.sub(this.pos, other.pos);
+    let distanceSq = constrain(force.magSq(), 100, 1000);
+    let strength = G * (this.mass * other.mass) / distanceSq;
+    force.setMag(strength);
+    other.applyForce(force);
+  }
+  
+  applyForce(force) {
+    let f = p5.Vector.div(force, this.mass);
+    this.acc.add(f);
+  }
+
+  update() {
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+    this.acc.set(0, 0);
+  }
+
+  show() {
+    stroke(255);
+    strokeWeight(2);
+    fill(255, 100);
+    ellipse(this.pos.x, this.pos.y, this.r * 2);
+  }
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  
+  for (let i=0; i<numOfBodys; i++) {
+    let theta = random(2 * PI);
+    let x  = (r * sin(theta)) + (windowWidth / 2);
+    let y  = (r * cos(theta)) + (windowHeight / 2);
+    let v  = random(minV, maxV);
+    let vx = -v * cos(theta);
+    let vy = v * sin(theta);
+    let m  = random(minM, maxM);
+    bodies[i] = new Body(x, y, vx, vy, m);
+  }
+  if(applySun) sun = new Body(x=windowWidth / 2, y=windowHeight / 2, vx=0, vy=0, m=sunM);
+}
+
+function draw() {
+  if(showTrails) background(0, 20);
+  else background(0);
+  // printMomentumAndKE(bodies);
+  
+  if(showSun) sun.show();
+  for (let body1 of bodies) {
+    if(applySun) sun.attract(body1);
+    body1.update();
+    body1.show();
+    
+    for(let body2 of bodies) {
+      if(body1 != body2) {
+        body1.attract(body2);
+      }
+    }
+  }
+}
+
+function printMomentumAndKE() {
+  let KE = 0;
+  let p = 0;
+  for(let body of bodies) {
+    KE += body.mass * body.vel.mag() * body.vel.mag() / 2;
+    p += body.mass * body.vel.mag();
+  }
+  console.log("Total p  = ", p, "\tTotal KE = ", KE);
+}

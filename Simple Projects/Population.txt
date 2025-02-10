@@ -1,0 +1,83 @@
+let width  = 800;
+let height = 700;
+
+let numOfPoints = 1000;
+let numToSkip   = 100;
+let rStart      = 2.8;
+let rEnd        = 4;
+let rStep       = 0.001;
+
+let axisPadding = 20;
+let originX = axisPadding;
+let originY = height - axisPadding;
+let currentR = rStart;
+let paused = false;
+
+function setup() {
+  createCanvas(width, height);
+  
+  background(0);
+  showAxes();
+  
+  stroke(255, 255, 0, 20);
+  strokeWeight(1);
+}
+
+function draw() {
+  if (currentR > rEnd) {
+    noLoop();
+    console.log("end");
+    return;
+  }
+
+  if(!paused) {
+    let x = Math.random();
+    for(let i=0; i<numToSkip; i++) {
+      x = x_nPlus1(x, currentR);
+    }
+    for(let i=0; i<numOfPoints; i++) {
+      plotNext(x, currentR);
+      x = x_nPlus1(x, currentR);
+    }
+    currentR += rStep;
+  }
+}
+
+function mousePressed() {
+  if(mouseButton === LEFT && mouseInCanvas()) {
+    paused = !paused;
+  }
+}
+
+function mouseInCanvas() {
+  return (
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  );
+}
+
+function showAxes() {
+  stroke(100);
+  strokeWeight(1);
+  textSize(20);
+  fill(255);
+  // x-axis
+  line(0, originY, width, originY);
+  text("r", width - axisPadding, originY + 16);
+  // y-axis
+  line(originX, 0, originX, height);
+  text("x", 4, axisPadding);
+}
+
+function x_nPlus1(x, r) {
+  return r*x * (1-x);
+}
+
+function plotNext(x, r) {
+  let plotX = map(r, rStart, rEnd, originX, width);
+  let plotY = map(x, 0, 1, originY, 0);
+
+  point(plotX, plotY);
+}

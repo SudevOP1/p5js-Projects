@@ -1,0 +1,78 @@
+let width = 700;
+let height = 700;
+
+let numOfPoints = 360;
+
+// default vars
+let a  = 1;
+let b  = 1;
+let m  = 0;
+let n1 = 1;
+let n2 = 1;
+let n3 = 1;
+let scalingFactor = 200;
+let paused = false;
+let showTrails = false;
+
+function modifyVars() {
+  if(mouseInCanvas()) {
+    a = mouseX / scalingFactor;
+    b = mouseY / scalingFactor;
+    m = 10;
+    n1 = 1;
+    n2 = 1;
+    n2 = 1;
+  }
+}
+
+function setup() {
+  createCanvas(width, height);
+  
+  stroke(255);
+  strokeWeight(1);
+  noFill();
+}
+
+function draw() {
+  if(!paused) {
+    if( showTrails) background(0, 20);
+    if(!showTrails) background(0);
+    translate(width/2, height/2);
+
+    modifyVars();
+    console.log(`a=${a}, b=${b}, m=${m}, n1=${n1}, n2=${n2}, n3=${n3}`);
+
+    beginShape();
+    for(let i=0; i<=numOfPoints; i++) {
+      let theta = i * 2 * PI / 180;
+      let r = superFunction(theta, a, b, m, n1, n2, n3);
+      let x = r * cos(theta);
+      let y = r * sin(theta);
+      vertex(x, y);
+    }
+    endShape();
+  }
+}
+
+function mousePressed() {
+  if(mouseInCanvas() && mouseButton === LEFT) {
+    paused = !paused;
+  }
+}
+
+function superFunction(theta, a, b, m, n1, n2, n3) {
+  let term1 = Math.pow(abs(cos(m*theta/4)/a), n2);
+  let term2 = Math.pow(abs(sin(m*theta/4)/b), n3);
+  let final = pow((term1 + term2), -1/n1);
+  final *= scalingFactor;
+  return final;
+}
+
+function mouseInCanvas() {
+  return (
+    mouseX >= 0 &&
+    mouseX <= width &&
+    mouseY >= 0 &&
+    mouseY <= height
+  );
+}

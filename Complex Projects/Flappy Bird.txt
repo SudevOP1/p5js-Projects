@@ -1,0 +1,245 @@
+let width  = 700;
+let height = 700;
+
+let g;
+let gameOver = false;
+let gameStarted = false;
+let paused = false;
+let score;
+
+let pillars = [];
+let pillarSpeed;
+let pillarGap;
+let pillarWidth;
+let pillarCol;
+let pillarDist;
+let pillarYPadding;
+
+let birdPos;
+let birdVel;
+let birdMaxVel;
+let birdJumpVel;
+let birdCol;
+let birdRad;
+
+function setup() {
+  createCanvas(width, height);
+  textAlign(CENTER, CENTER);
+  textStyle(BOLD);
+}
+
+function draw() {
+  if(!paused) background(0);
+  
+  // title screen
+  if(!gameStarted) {
+    fill(255);
+    textSize(64);
+    text("Flappy Bird", width/2, height/2 - 40);
+    textSize(24);
+    text("Press SPACE to play", width/2, height/2 + 40);
+  }
+  
+  // game over screen
+  else if(gameStarted && gameOver) {
+    fill(255)
+    textSize(64);
+    text("Game Over", width/2, height/2 - 40);
+    textSize(24);
+    text("Press SPACE to play again", width/2, height/2 + 40);
+    fill(0, 255, 0);
+    textSize(32);
+    text(score, width/2, 20);
+  }
+  
+  // playing game
+  else if(gameStarted && !gameOver) {
+    if(!paused) {
+
+      // show pillars
+      for(let p of pillars) {
+        p.update();
+        p.show();
+        // update score
+        if(!p.scored && p.x + pillarWidth < birdPos.x) {
+          score++;
+          p.scored = true;
+        }
+      }
+
+      // spawn new pillars
+      let rightmostPillar = pillars[pillars.length - 1];
+      if (rightmostPillar.x + pillarWidth <= width - pillarDist) {
+        pillars.push(new Pillar(
+          width,
+          random(pillarYPadding, height - pillarGap - pillarYPadding)
+        ));
+      }
+
+      // remove invisible pillars
+      pillars = pillars.filter(p => p.isVisible());
+      
+      // show bird
+      updateBird();
+      showBird();
+      
+      // update game
+      checkGameOver();
+      fill(0, 255, 0);
+      textSize(32);
+      text(score, width/2, 20);
+    }
+  }
+}
+
+function setupVars() {
+  g = 0.8;
+  score = 0;
+  
+  pillarSpeed = 5;
+  pillarGap = 200;
+  pillarWidth = 50;
+  pillarCol = color(255);
+  pillarDist = 300;
+  pillarYPadding = 50;
+  
+  birdCol = color(255, 255, 0);
+  birdMaxVel = 25;
+  birdJumpVel = -15;
+  birdRad = 20;
+  
+  resetGame();
+}
+
+function showBird() {
+  noStroke();
+  fill(birdCol);
+  circle(birdPos.x, birdPos.y, 2 * birdRad);
+}
+
+function updateBird() {
+  birdVel.y += g;
+  birdVel.limit(birdMaxVel);
+  birdPos.add(birdVel);
+}
+
+function resetGame() {
+  
+  // game
+  score = 0;
+  
+  // reset bird
+  birdPos = createVector(width/2, height/2);
+  birdVel = createVector(0, birdJumpVel);
+  
+  // reset pillars
+  pillars = [
+    new Pillar(
+      width,
+      random(pillarYPadding, height - pillarGap - pillarYPadding)
+    )
+  ];
+}
+
+function checkGameOver() {
+  let birdPillarCollision = false;
+  for(let p of pillars) {
+    if(p.checkCollision(birdPos.x, birdPos.y, birdRad)) {
+      birdPillarCollision = true;
+    }
+  }
+  if(
+    birdPillarCollision ||
+    birdPos.y <= birdRad ||
+    birdPos.y >= height - birdRad
+  ) {
+    gameOver = true;
+  }
+}
+
+function checkCircleRectangleCollision(cx, cy, cr, rx1, ry1, rx2, ry2) {
+  let closestX = constrain(cx, rx1, rx2);
+  let closestY = constrain(cy, ry1, ry2);
+  let distance = dist(cx, cy, closestX, closestY);
+  return distance < cr;
+}
+
+function keyPressed() {
+  if(key === " ") {
+    // start the game (first time)
+    if(!gameStarted) {
+      setupVars();
+      gameStarted = true;
+      gameOver = false;
+      paused = false;
+    }
+    // start the game (not first time)
+    if(gameStarted && gameOver) {
+      resetGame();
+      gameOver = false;
+      paused = false;
+    }
+    // jump bird
+    if(gameStarted && !gameOver) {
+      if(!paused) birdVel.y = birdJumpVel;
+    }
+  }
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    // gameStarted && !gameOver &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    paused = !paused;
+  }
+}
+
+class Pillar {
+  
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.scored = false;
+  }
+  
+  update() {
+    this.x -= pillarSpeed;
+  }
+  
+  isVisible() {
+    return this.x + pillarWidth > 0;
+  }
+  
+  show() {
+    noStroke();
+    fill(pillarCol);
+    // top pillar
+    rect(this.x, 0, pillarWidth, this.y);
+    // bottom pillar
+    rect(this.x, this.y+pillarGap, pillarWidth, height-(this.y+pillarGap));
+  }
+  
+  checkCollision(x, y, r) {
+    return (
+      checkCircleRectangleCollision(
+        x, y, r,
+        this.x,
+        0,
+        this.x + pillarWidth,
+        this.y
+      ) ||
+      checkCircleRectangleCollision(
+        x, y, r,
+        this.x,
+        this.y + pillarGap,
+        this.x + pillarWidth,
+        height
+      )
+    )
+  }
+}

@@ -1,0 +1,140 @@
+let width  = 700;
+let height = 700;
+
+let data = [
+  [422.36544707986053,277.3206471508575,1], 
+  [233.08834292359484,468.80879755502957,1], 
+  [80.34271759183902,425.0336059713865,1], 
+  [285.30696317787687,175.12731830326766,0], 
+  [246.64575738385116,659.5639669798886,1], 
+  [661.3441574363695,82.75957733650725,1], 
+  [631.0397450214845,536.821605933236,0], 
+  [174.8637964492715,190.1844497698947,0], 
+  [3.0425531300483533,511.2773791589546,1], 
+  [84.64846972659493,682.304692023283,1], 
+  [173.99156104952664,378.9182472963533,0], 
+  [644.4027056956015,656.6303690390658,1], 
+  [314.1602583577183,632.4716930811737,1], 
+  [108.37919086501839,554.9505622320489,0], 
+  [95.17874089455698,85.8123131196089,0], 
+  [239.02767772479422,223.47352517220682,0], 
+  [297.5171602737018,201.87587170671884,1], 
+  [189.1735992411119,505.1828297177303,1], 
+  [467.16747389109696,147.751321786122,1], 
+  [517.1725084043529,472.22550272472176,1], 
+];
+
+let numOfPoints = 20;
+let pointsPerFrame = 10;
+let k = 6;
+
+let paused = false;
+let points = [];
+
+function setup() {
+  createCanvas(width, height);
+  createRandomPoints();
+  // createPointsFromData();
+  background(0);
+}
+
+function draw() {
+  if(!paused) {
+    for(let i=0; i<pointsPerFrame; i++) {
+      let x = random(width);
+      let y = random(height);
+      let s = classifyPoint(k, x, y);
+
+      if(s === 0)   fill(50, 0, 0);
+      if(s === 0.5) fill(50, 50, 0);
+      if(s === 1)   fill(0, 50, 0);
+      noStroke();
+      circle(x, y, 20);
+    }
+
+    for(let p of points) {
+      p.show();
+    }
+  }
+}
+
+function classifyPoint(k, x, y) {
+  
+  // get distances
+  let distances = [];
+  for(let i=0; i<points.length; i++) {
+    let d = dist(x, y, points[i].x, points[i].y);
+    distances.push([i, d]);
+  }
+  
+  // sort distances
+  distances.sort(function(a, b) {
+    return a[1] - b[1];
+  });
+  // console.log(distances);
+  
+  // count neighbors
+  let state0 = 0;
+  let state1 = 0;
+  for(let i=0; i<k; i++) {
+    if(points[distances[i][0]].state === 0) state0++;
+    if(points[distances[i][0]].state === 1) state1++;
+  }
+  
+  // return dominating state
+  if(state0 > state1) {
+    return 0;
+  } else if(state0 === state1) {
+    return 0.5
+  } else if(state0 < state1) {
+    return 1;
+  }
+}
+
+function createRandomPoints() {
+  for(let i=0; i<numOfPoints; i++) {
+    points.push(new Point(
+      x = random(width),
+      y = random(height),
+      state = floor(random(2))
+    ));
+  }
+}
+
+function createPointsFromData() {
+  for(let p of data) {
+    points.push(new Point(
+      x = p[0],
+      y = p[1],
+      state = p[2]
+    ));
+  }
+}
+
+function mousePressed() {
+  if(
+    mouseButton === LEFT &&
+    mouseX >= 0 &&
+    mouseY >= 0 &&
+    mouseX <= width &&
+    mouseY <= height
+  ) {
+    paused = !paused;
+  }
+}
+
+class Point {
+  
+  constructor(x, y, state) {
+    this.x = x;
+    this.y = y;
+    this.state = state;
+  }
+  
+  show() {
+    strokeWeight(10);
+    if(this.state === 0) stroke(255, 0, 0);
+    if(this.state === 1) stroke(0, 255, 0);
+    point(this.x, this.y);
+  }
+}
