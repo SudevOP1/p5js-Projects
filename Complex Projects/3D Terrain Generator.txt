@@ -1,0 +1,85 @@
+let width  = 700;
+let height = 700;
+
+let sideLength  = 20;
+let numOfBoxes  = 70;
+let noiseScale  = 0.01;
+let noiseOffset = 1;
+
+let minHeight   = 5;
+let maxHeight   = 100;
+
+let levelSlider1, levelSlider2, levelSlider3;
+let heightScaleSlider;
+
+function setup() {
+  createCanvas(width, height, WEBGL);
+  noStroke();
+  
+  levelSlider1 = createSlider(0, 1, 0.34, 0.01);
+  levelSlider2 = createSlider(0, 1, 0.48, 0.01);
+  levelSlider3 = createSlider(0, 1, 0.60, 0.01);
+  heightScaleSlider = createSlider(0, 2, 1, 0.01);
+  
+  console.log("Scroll Down to zoom out")
+  console.log("Scroll Up   to zoom in")
+  console.log("Use Mouse Cursor to move camera")
+}
+
+function draw() {
+  background(0);
+  drawTerrain();
+  orbitControl();
+}
+
+function getHeight(x, z) {
+  return noise(
+    (x * noiseScale) + noiseOffset,
+    (z * noiseScale) + noiseOffset
+  );
+}
+
+function getColor(noiseValue) {
+  let deepSeaLevel = levelSlider1.value();
+  let seaLevel     = levelSlider2.value();
+  let sandLevel    = levelSlider3.value();
+  let deepSeaColor = color("#002973");
+  let seaColor     = color("#0e87cc");
+  let sandColor    = color("#dec77d");
+  let grassColor   = color("#22c229");
+  
+  if     (noiseValue < deepSeaLevel) return deepSeaColor;
+  else if(noiseValue < seaLevel)     return seaColor;
+  else if(noiseValue < sandLevel)    return sandColor;
+  else                               return grassColor;
+}
+
+function getBoxHeight(noiseValue) {
+  let heightScale = heightScaleSlider.value();
+  return map(noiseValue, 0, 1, minHeight, maxHeight) * heightScale;
+}
+
+function drawBox(x, z) {
+  let noiseValue = getHeight(x, z);
+  let h = getBoxHeight(noiseValue);
+  
+  push();
+  translate(
+    x - (numOfBoxes*sideLength)/2 + sideLength/2,
+    -h/2,
+    z - (numOfBoxes*sideLength)/2 + sideLength/2
+  );
+  fill(getColor(noiseValue));
+  box(sideLength, h, sideLength);
+  pop();
+}
+
+function drawTerrain() {
+  for(let i=0; i<numOfBoxes; i++) {
+    for(let j=0; j<numOfBoxes; j++) {
+      let x = i * sideLength;
+      let z = j * sideLength;
+      drawBox(x, z);
+    }
+  }
+}
