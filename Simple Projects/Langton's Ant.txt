@@ -1,9 +1,11 @@
 let width    = 700;
 let height   = 700;
-let iterationsPerFrame = 50;
 let cellSize = 2;
-let updateCellUsingMouse = true;
 let dir = 0; // start up
+let iterationsPerFrame = 100;
+let numIterations = 0;
+let updateCellUsingMouse = false;
+let showNumIterations = true;
 
 let grid;
 let directions = [
@@ -16,25 +18,33 @@ let cols = Math.floor(width / cellSize);
 let rows = Math.floor(height / cellSize);
 let antX = Math.floor(cols/2);
 let antY = Math.floor(rows/2);
+let paused = false;
 
 function setup() {
   createCanvas(width, height);
   grid = createGrid();
+  textAlign(RIGHT, BOTTOM);
+  textSize(16);
 }
 
 function draw() {
-  background(0);
-      
-  for(let k=0; k<iterationsPerFrame; k++){
-    updateAnt();
-  }
-  
-  for(let i=0; i<cols; i++) {
-    for(let j=0; j<rows; j++) {
-      drawCells(i, j);
+  if(!paused) {
+    background(0);
+
+    for(let k=0; k<iterationsPerFrame; k++){
+      updateAnt();
     }
+
+    for(let i=0; i<cols; i++) {
+      for(let j=0; j<rows; j++) {
+        drawCells(i, j);
+      }
+    }
+    
+    numIterations += iterationsPerFrame;
+    drawNumIterations();
+    drawAnt();
   }
-  drawAnt();
 }
 
 function createGrid() {
@@ -46,20 +56,23 @@ function createGrid() {
 }
 
 function mouseDragged() {
-  let i = Math.floor(mouseX / cellSize);
-  let j = Math.floor(mouseY / cellSize);
-  if (updateCellUsingMouse && i >= 0 && i < cols && j >= 0 && j < rows) {
+  if(updateCellUsingMouse && i >= 0 && i < cols && j >= 0 && j < rows) {
+    let i = Math.floor(mouseX / cellSize);
+    let j = Math.floor(mouseY / cellSize);
     if(mouseButton == LEFT) grid[i][j] = true;
     else grid[i][j] = false;
   }
 }
 
 function mousePressed() {
-  let i = Math.floor(mouseX / cellSize);
-  let j = Math.floor(mouseY / cellSize);
-  if (updateCellUsingMouse && i >= 0 && i < cols && j >= 0 && j < rows) {
+  if(updateCellUsingMouse && i >= 0 && i < cols && j >= 0 && j < rows) {
+    let i = Math.floor(mouseX / cellSize);
+    let j = Math.floor(mouseY / cellSize);
     if(mouseButton == LEFT) grid[i][j] = true;
     else grid[i][j] = false;
+  }
+  if(!updateCellUsingMouse) {
+    paused = !paused;
   }
 }
 
@@ -92,6 +105,24 @@ function updateAnt() {
 
 function drawAnt() {
   noStroke();
-  fill(50, 50, 200);
+  fill(255, 50, 50);
   rect(antX * cellSize, antY * cellSize, cellSize, cellSize);
+  noFill();
+}
+
+function drawNumIterations() {
+  if(showNumIterations) {
+    let txt = numIterations.toString();
+    let tw = textWidth(txt) + 10;
+    let th = textAscent() + textDescent() + 6;
+
+    // draw bg rect
+    noStroke();
+    fill(0, 0, 0, 200);
+    rect(width - tw, height - th, tw, th);
+
+    // draw text
+    fill(255, 50, 50);
+    text(txt, width - 5, height - 5);
+  }
 }
